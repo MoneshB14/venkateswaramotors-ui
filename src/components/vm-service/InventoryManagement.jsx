@@ -24,7 +24,7 @@ import {
   Hash
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
-import { inventoryAPI } from '../../services/apiWithToast';
+import { inventoryAPI } from '../../services/api';
 
 const InventoryManagement = () => {
   const [inventory, setInventory] = useState([]);

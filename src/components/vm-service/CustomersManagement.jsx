@@ -24,7 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
-import { customersAPI, vehiclesAPI, bookingsAPI } from '../../services/apiWithToast';
+import { customersAPI, vehiclesAPI, bookingsAPI } from '../../services/api';
 
 const CustomersManagement = () => {
   const [customers, setCustomers] = useState([]);

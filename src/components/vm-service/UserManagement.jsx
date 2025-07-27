@@ -32,7 +32,7 @@ import {
   Crown
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
-import { userManagementAPI } from '../../services/apiWithToast';
+import { userManagementAPI } from '../../services/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -62,7 +62,7 @@ const UserManagement = () => {
     enabledUsers: 0,
     lockedUsers: 0
   });
-  const { confirmDelete } = useGlobal();
+  const { confirmDelete, showSuccess, showError } = useGlobal();
 
   // User form state
   const [userForm, setUserForm] = useState({
@@ -99,7 +99,7 @@ const UserManagement = () => {
     } catch (err) {
       console.error('Error fetching users:', err);
       setError('Failed to load users. Please try again.');
-      toast.error('Error', 'Failed to load users. Please try again.');
+      showError('Error', 'Failed to load users. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -149,10 +149,13 @@ const UserManagement = () => {
       onConfirm: async () => {
         try {
           await userManagementAPI.deleteUser(userId);
+          showSuccess('Success', 'User deleted successfully');
           fetchUsers();
           fetchStats();
         } catch (err) {
           console.error('Error deleting user:', err);
+          const errorMessage = err.response?.data?.message || 'Failed to delete user. Please try again.';
+          showError('Error', errorMessage);
         }
       }
     });
@@ -167,10 +170,10 @@ const UserManagement = () => {
       
       if (editingUser) {
         response = await userManagementAPI.updateUser(editingUser.id, userForm);
-        toast.success('Success', 'User updated successfully');
+        showSuccess('Success', 'User updated successfully');
       } else {
         response = await userManagementAPI.createUser(userForm);
-        toast.success('Success', 'User created successfully');
+        showSuccess('Success', 'User created successfully');
       }
       
       if (response) {
@@ -183,7 +186,7 @@ const UserManagement = () => {
     } catch (err) {
       console.error('Error saving user:', err);
       const errorMessage = err.response?.data?.message || 'Failed to save user. Please try again.';
-      toast.error('Error', errorMessage);
+      showError('Error', errorMessage);
     }
   };
 
@@ -245,13 +248,13 @@ const UserManagement = () => {
     try {
       const response = await userManagementAPI.toggleUserStatus(userId, enabled);
       if (response) {
-        toast.success('Success', `User ${enabled ? 'enabled' : 'disabled'} successfully`);
+        showSuccess('Success', `User ${enabled ? 'enabled' : 'disabled'} successfully`);
         fetchUsers();
         fetchStats();
       }
     } catch (err) {
       console.error('Error toggling user status:', err);
-      toast.error('Error', 'Failed to update user status. Please try again.');
+      showError('Error', 'Failed to update user status. Please try again.');
     }
   };
 
@@ -260,13 +263,13 @@ const UserManagement = () => {
     try {
       const response = await userManagementAPI.toggleUserLock(userId, locked);
       if (response) {
-        toast.success('Success', `User ${locked ? 'locked' : 'unlocked'} successfully`);
+        showSuccess('Success', `User ${locked ? 'locked' : 'unlocked'} successfully`);
         fetchUsers();
         fetchStats();
       }
     } catch (err) {
       console.error('Error toggling user lock:', err);
-      toast.error('Error', 'Failed to update user lock status. Please try again.');
+      showError('Error', 'Failed to update user lock status. Please try again.');
     }
   };
 
@@ -275,13 +278,13 @@ const UserManagement = () => {
     try {
       const response = await userManagementAPI.changeUserRole(userId, role);
       if (response) {
-        toast.success('Success', `User role changed to ${role} successfully`);
+        showSuccess('Success', `User role changed to ${role} successfully`);
         fetchUsers();
         fetchStats();
       }
     } catch (err) {
       console.error('Error changing user role:', err);
-      toast.error('Error', 'Failed to change user role. Please try again.');
+      showError('Error', 'Failed to change user role. Please try again.');
     }
   };
 

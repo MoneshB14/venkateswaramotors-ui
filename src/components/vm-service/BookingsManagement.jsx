@@ -25,7 +25,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
-import { bookingsAPI } from '../../services/apiWithToast';
+import { bookingsAPI } from '../../services/api';
 import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
 import BookingForm from './BookingForm';
 import BookingDetailsModal from './BookingDetailsModal';

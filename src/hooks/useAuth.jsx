@@ -21,9 +21,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await vmServiceAuth.checkAuthStatus();
-      
+
       if (response.success) {
         // User is authenticated, set user data
         setUser({
@@ -58,9 +58,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await vmServiceAuth.verifyOtp(email, otp);
-      
+
       if (response.success) {
         // Set user data from login response
         setUser({
@@ -89,10 +89,10 @@ export const AuthProvider = ({ children }) => {
       // Clear user data
       setUser(null);
       setError(null);
-      
+
       // You can add a logout API call here if needed
       // await vmServiceAuth.logout();
-      
+
       // Redirect to login page
       window.location.href = '/service/login';
     } catch (err) {
@@ -110,9 +110,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await vmServiceAuth.login(email);
-      
+
       if (response.success) {
         return { success: true, message: response.message };
       } else {
@@ -133,9 +133,9 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await vmServiceAuth.resendOtp(email);
-      
+
       if (response.success) {
         return { success: true, message: response.message };
       } else {
@@ -155,12 +155,12 @@ export const AuthProvider = ({ children }) => {
   const signup = async (userData) => {
     try {
       setLoading(true);
-      
+
       // Clear any previous errors when starting a new signup attempt
       setError(null);
-      
+
       const response = await vmServiceAuth.signup(userData);
-      
+
       if (response.success) {
         return { success: true, message: response.message };
       } else {
@@ -169,10 +169,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Signup failed:', err);
-      
+
       // Handle specific error cases
       let errorMessage = 'Signup failed';
-      
+
       // Use the enhanced error message from the interceptor if available
       if (err.userMessage) {
         errorMessage = err.userMessage;
@@ -183,7 +183,7 @@ export const AuthProvider = ({ children }) => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       // Check for specific error patterns and provide user-friendly messages
       if (errorMessage.toLowerCase().includes('already exists')) {
         errorMessage = 'An account with this email address already exists. Please use a different email or try logging in instead.';
@@ -192,7 +192,7 @@ export const AuthProvider = ({ children }) => {
       } else if (errorMessage.toLowerCase().includes('validation')) {
         errorMessage = 'Please check your input and try again.';
       }
-      
+
       setError(errorMessage);
       return { success: false, message: errorMessage };
     } finally {

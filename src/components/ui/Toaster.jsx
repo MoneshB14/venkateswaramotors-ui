@@ -1,24 +1,22 @@
 import React from 'react';
 import { useToast } from '../../hooks/useToast';
-import { Toast, ToastTitle, ToastDescription, ToastClose } from './toast';
+import SimpleToast from './SimpleToast';
 
 export const Toaster = () => {
   const { toasts, removeToast } = useToast();
 
   return (
     <>
-      {toasts.map((toast) => (
-        <Toast
+      {toasts.map((toast, index) => (
+        <SimpleToast
           key={toast.id}
+          id={toast.id}
+          title={toast.title}
+          description={toast.description}
           variant={toast.variant}
-          onOpenChange={() => removeToast(toast.id)}
-        >
-          <div className="flex flex-col gap-1">
-            {toast.title && <ToastTitle>{toast.title}</ToastTitle>}
-            {toast.description && <ToastDescription>{toast.description}</ToastDescription>}
-          </div>
-          <ToastClose />
-        </Toast>
+          onClose={() => removeToast(toast.id)}
+          index={index}
+        />
       ))}
     </>
   );

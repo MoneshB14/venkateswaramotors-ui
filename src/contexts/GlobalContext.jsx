@@ -1,7 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useToast } from '../hooks/useToast';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
-import { setGlobalToastHandler } from '../services/apiWithToast';
 
 const GlobalContext = createContext();
 
@@ -167,13 +166,7 @@ export const GlobalProvider = ({ children }) => {
     showError('Error', errorMessage);
   }, [showError]);
 
-  // Initialize API toast handler
-  useEffect(() => {
-    setGlobalToastHandler({
-      showSuccess,
-      handleApiError,
-    });
-  }, [showSuccess, handleApiError]);
+
 
   const value = {
     // Toast functions
