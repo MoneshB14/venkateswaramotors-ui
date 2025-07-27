@@ -1,0 +1,935 @@
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { Separator } from '../ui/separator';
+import {
+  Plus,
+  Search,
+  Filter,
+  Calendar,
+  Clock,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Edit,
+  Trash2,
+  Eye,
+  Phone,
+  Car,
+  User,
+  DollarSign,
+  RefreshCw,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  MoreHorizontal
+} from 'lucide-react';
+import { useGlobal } from '../../contexts/GlobalContext';
+import { bookingsAPI } from '../../services/apiWithToast';
+import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
+import BookingForm from './BookingForm';
+import BookingDetailsModal from './BookingDetailsModal';
+
+const BookingsManagement = ({ initialFilters = null }) => {
+  const [bookings, setBookings] = useState([]);
+  const [stats, setStats] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [editingBooking, setEditingBooking] = useState(null);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [filters, setFilters] = useState({
+    status: initialFilters?.status || '',
+    serviceType: initialFilters?.serviceType || '',
+    dateFrom: initialFilters?.dateFrom || '',
+    dateTo: initialFilters?.dateTo || '',
+    search: initialFilters?.search || ''
+  });
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('bookingDateTime');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalBookings, setTotalBookings] = useState(0);
+  const [updatingStatus, setUpdatingStatus] = useState({});
+  const { confirmDelete } = useGlobal();
+
+  // Helper function to validate date range
+  const isValidDateRange = (fromDate, toDate) => {
+    if (!fromDate || !toDate) return false;
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    return from <= to;
+  };
+
+  // Helper function to format date for API
+  const formatDateForAPI = (dateString) => {
+    const date = new Date(dateString);
+    return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+  };
+
+  // Get count of active filters
+  const getActiveFilterCount = () => {
+    return Object.values(filters).filter(f => f && f !== '').length;
+  };
+
+  // Get active filter summary
+  const getActiveFilterSummary = () => {
+    const activeFilters = [];
+
+    if (filters.search) activeFilters.push(`Search: "${filters.search}"`);
+    if (filters.status) {
+      const statusName = bookingStatuses.find(s => s.id === filters.status)?.name || filters.status;
+      activeFilters.push(`Status: ${statusName}`);
+    }
+    if (filters.serviceType) {
+      const serviceName = serviceTypes.find(s => s.id === filters.serviceType)?.name || filters.serviceType;
+      activeFilters.push(`Service: ${serviceName}`);
+    }
+    if (filters.dateFrom && filters.dateTo) {
+      activeFilters.push(`Date: ${formatDate(filters.dateFrom)} - ${formatDate(filters.dateTo)}`);
+    }
+
+    return activeFilters;
+  };
+
+  // Fetch bookings
+  const fetchBookings = async () => {
+    try {
+      console.log('fetchBookings called with filters:', filters, 'page:', currentPage);
+      setLoading(true);
+      setError(null);
+
+      let response;
+
+      // Determine which filters are active
+      const activeFilters = {
+        search: filters.search && filters.search.trim() !== '',
+        serviceType: filters.serviceType && filters.serviceType !== '',
+        dateRange: filters.dateFrom && filters.dateTo &&
+          filters.dateFrom !== '' && filters.dateTo !== '' &&
+          isValidDateRange(filters.dateFrom, filters.dateTo),
+        status: filters.status && filters.status !== ''
+      };
+
+      // Build filter strategy based on active filters
+      if (activeFilters.search) {
+        // Search takes highest priority
+        response = await bookingsAPI.searchBookings(filters.search);
+      } else if (activeFilters.serviceType && activeFilters.dateRange) {
+        // Combined service type and date range filters
+        response = await handleCombinedFilters();
+      } else if (activeFilters.serviceType) {
+        // Service type filter only
+        // Convert service type ID to name for API call
+        const serviceTypeName = getServiceTypeName(filters.serviceType);
+        console.log('Calling API with service type name:', serviceTypeName);
+        response = await bookingsAPI.getBookingsByServiceType(serviceTypeName, currentPage, pageSize);
+      } else if (activeFilters.dateRange) {
+        // Date range filter only
+        response = await bookingsAPI.getBookingsByDateRange(
+          formatDateForAPI(filters.dateFrom),
+          formatDateForAPI(filters.dateTo),
+          currentPage,
+          pageSize
+        );
+      } else if (activeFilters.status) {
+        // Status filter only
+        response = await bookingsAPI.getBookingsByStatus(filters.status, currentPage, pageSize);
+      } else {
+        // No filters - get all bookings
+        response = await bookingsAPI.getBookings(currentPage, pageSize);
+      }
+
+      console.log('API response:', response);
+
+      if (response.success) {
+        setBookings(response.bookings || []);
+        setTotalBookings(response.totalBookings || 0);
+
+        // Debug: Log service type values to understand the data structure
+        if (response.bookings && response.bookings.length > 0) {
+          debugServiceTypes(response.bookings);
+        }
+
+        // Update stats
+        const total = response.totalBookings || response.bookings?.length || 0;
+        setStats({
+          totalBookings: total,
+          todayBookings: 0,
+          thisWeekBookings: 0,
+          thisMonthBookings: 0
+        });
+      } else {
+        setError(response.message || 'Failed to fetch bookings');
+      }
+    } catch (err) {
+      console.error('Error fetching bookings:', err);
+      setError('Failed to load bookings. Please try again.');
+      toast.error('Error', 'Failed to load bookings. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle combined filters (service type + date range)
+  const handleCombinedFilters = async () => {
+    try {
+      // Get all bookings to apply multiple filters
+      const allBookingsResponse = await bookingsAPI.getBookings(0, 1000);
+
+      if (!allBookingsResponse.success) {
+        throw new Error('Failed to fetch bookings for combined filtering');
+      }
+
+                  // Apply both filters on the client side
+            const filteredBookings = allBookingsResponse.bookings.filter(booking => {
+              // Service type filter - use service type name for matching
+              const serviceTypeName = getServiceTypeName(filters.serviceType);
+              const serviceTypeMatch = booking.serviceType === serviceTypeName;
+              
+              // Debug logging for service type matching
+              console.log('Filtering booking:', {
+                bookingServiceType: booking.serviceType,
+                filterServiceTypeName: serviceTypeName,
+                match: serviceTypeMatch
+              });
+              
+              // Date range filter
+              const bookingDate = new Date(booking.preferredDate);
+              const fromDate = new Date(formatDateForAPI(filters.dateFrom));
+              const toDate = new Date(formatDateForAPI(filters.dateTo));
+              toDate.setHours(23, 59, 59); // Include the entire to date
+              const dateMatch = bookingDate >= fromDate && bookingDate <= toDate;
+              
+              return serviceTypeMatch && dateMatch;
+            });
+
+      // Apply pagination
+      const startIndex = currentPage * pageSize;
+      const endIndex = startIndex + pageSize;
+      const paginatedBookings = filteredBookings.slice(startIndex, endIndex);
+
+      return {
+        success: true,
+        bookings: paginatedBookings,
+        totalBookings: filteredBookings.length
+      };
+    } catch (error) {
+      console.error('Error with combined filters, falling back to service type only:', error);
+      // Fallback to service type filter only
+      return await bookingsAPI.getBookingsByServiceType(filters.serviceType, currentPage, pageSize);
+    }
+  };
+
+  // Load bookings on component mount and when filters change
+  useEffect(() => {
+    fetchBookings();
+  }, [filters, sortBy, sortOrder, currentPage, pageSize]);
+
+  // Show filters panel when initial filters are provided
+  useEffect(() => {
+    if (initialFilters && Object.values(initialFilters).some(value => value)) {
+      setShowFilters(true);
+      // Show a toast notification about the applied filters
+      const filterDescriptions = [];
+      if (initialFilters.status) {
+        const statusName = bookingStatuses.find(s => s.id === initialFilters.status)?.name || initialFilters.status;
+        filterDescriptions.push(`Status: ${statusName}`);
+      }
+      if (initialFilters.dateFrom && initialFilters.dateTo) {
+        filterDescriptions.push(`Date: ${formatDate(initialFilters.dateFrom)} - ${formatDate(initialFilters.dateTo)}`);
+      }
+      if (filterDescriptions.length > 0) {
+        toast.success('Filters Applied', `Showing bookings with: ${filterDescriptions.join(', ')}`);
+      }
+    }
+  }, [initialFilters]);
+
+  // Handle filter changes
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => {
+      const newFilters = {
+        ...prev,
+        [field]: value
+      };
+
+      // Validate date range if both dates are set
+      if (field === 'dateFrom' || field === 'dateTo') {
+        if (newFilters.dateFrom && newFilters.dateTo) {
+          if (!isValidDateRange(newFilters.dateFrom, newFilters.dateTo)) {
+            toast.error('Invalid Date Range', 'From date must be before or equal to To date.');
+            return prev; // Don't update filters if date range is invalid
+          }
+        }
+      }
+
+      // Clear search when other filters are applied
+      if (field !== 'search' && value && value !== '') {
+        newFilters.search = '';
+      }
+
+      return newFilters;
+    });
+    setCurrentPage(0); // Reset to first page when filters change
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setFilters({
+      status: '',
+      serviceType: '',
+      dateFrom: '',
+      dateTo: '',
+      search: ''
+    });
+    setCurrentPage(0);
+  };
+
+  // Handle booking deletion
+  const handleDeleteBooking = async (bookingId) => {
+    confirmDelete({
+      itemName: 'booking',
+      onConfirm: async () => {
+        try {
+          await bookingsAPI.deleteBooking(bookingId);
+          fetchBookings(); // Refresh the list
+        } catch (error) {
+          console.error('Error deleting booking:', error);
+        }
+      }
+    });
+  };
+
+  // Handle booking status update
+  const handleStatusUpdate = async (bookingId, newStatus) => {
+    setUpdatingStatus(prev => ({ ...prev, [bookingId]: true }));
+
+    try {
+      const response = await bookingsAPI.updateBooking(bookingId, {
+        bookingStatus: newStatus
+      });
+
+      if (response.success) {
+        toast.success('Status Updated', 'Booking status has been updated successfully.');
+        fetchBookings(); // Refresh the list
+      } else {
+        toast.error('Error', response.message || 'Failed to update status.');
+      }
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      toast.error('Error', 'Failed to update status. Please try again.');
+    } finally {
+      setUpdatingStatus(prev => ({ ...prev, [bookingId]: false }));
+    }
+  };
+
+  // Handle booking save (create or update)
+  const handleBookingSave = (booking) => {
+    console.log('handleBookingSave called with:', booking); // Debug log
+    setShowBookingForm(false);
+    setEditingBooking(null);
+    console.log('About to call fetchBookings...'); // Debug log
+
+    // Add a small delay to ensure the API has time to process the update
+    setTimeout(() => {
+      fetchBookings(); // Refresh the list
+    }, 500);
+  };
+
+  // Handle booking form cancel
+  const handleBookingCancel = () => {
+    setShowBookingForm(false);
+    setEditingBooking(null);
+  };
+
+  // Open booking form for editing
+  const handleEditBooking = async (booking) => {
+    try {
+      setLoading(true);
+
+      // Fetch the complete booking details
+      const response = await bookingsAPI.getBookingById(booking.bookingId);
+
+      if (response.success) {
+        setEditingBooking(response);
+        setShowBookingForm(true);
+      } else {
+        toast.error('Error', response.message || 'Failed to fetch booking details.');
+      }
+    } catch (error) {
+      console.error('Error fetching booking details:', error);
+      toast.error('Error', 'Failed to fetch booking details. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Open booking details modal
+  const handleViewBooking = (booking) => {
+    setSelectedBooking(booking);
+    setShowDetailsModal(true);
+  };
+
+  // Get status badge component
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      PENDING: {
+        color: 'bg-amber-50 text-amber-700 border-amber-200',
+        icon: Clock,
+        dotColor: 'bg-amber-500'
+      },
+      CONFIRMED: {
+        color: 'bg-blue-50 text-blue-700 border-blue-200',
+        icon: AlertCircle,
+        dotColor: 'bg-blue-500'
+      },
+      IN_PROGRESS: {
+        color: 'bg-orange-50 text-orange-700 border-orange-200',
+        icon: AlertCircle,
+        dotColor: 'bg-orange-500'
+      },
+      COMPLETED: {
+        color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+        icon: CheckCircle,
+        dotColor: 'bg-emerald-500'
+      },
+      DELIVERED: {
+        color: 'bg-green-50 text-green-700 border-green-200',
+        icon: CheckCircle,
+        dotColor: 'bg-green-500'
+      },
+      CANCELLED: {
+        color: 'bg-red-50 text-red-700 border-red-200',
+        icon: XCircle,
+        dotColor: 'bg-red-500'
+      }
+    };
+
+    const config = statusConfig[status] || statusConfig.PENDING;
+    const Icon = config.icon;
+
+    return (
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+        <div className={`w-1.5 h-1.5 rounded-full ${config.dotColor}`}></div>
+        <Icon className="w-3 h-3" />
+        {status.replace('_', ' ')}
+      </span>
+    );
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Format time for display
+  const formatTime = (timeString) => {
+    return timeString; // Already in HH:mm AM/PM format
+  };
+
+  // Get service type name
+  const getServiceTypeName = (serviceTypeId) => {
+    const serviceType = serviceTypes.find(service => service.id === serviceTypeId);
+    return serviceType ? serviceType.name : serviceTypeId;
+  };
+
+  // Debug function to log service type values
+  const debugServiceTypes = (bookings) => {
+    const uniqueServiceTypes = [...new Set(bookings.map(booking => booking.serviceType))];
+    console.log('Unique service types in bookings:', uniqueServiceTypes);
+    console.log('Available service type IDs:', serviceTypes.map(st => st.id));
+    console.log('Available service type names:', serviceTypes.map(st => st.name));
+  };
+
+  // Get next status options
+  const getNextStatusOptions = (currentStatus) => {
+    const statusFlow = {
+      PENDING: ['CONFIRMED', 'CANCELLED'],
+      CONFIRMED: ['IN_PROGRESS', 'CANCELLED'],
+      IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
+      COMPLETED: ['DELIVERED', 'CANCELLED'],
+      DELIVERED: ['CANCELLED'],
+      CANCELLED: []
+    };
+
+    return statusFlow[currentStatus] || [];
+  };
+
+  if (showBookingForm) {
+    return (
+      <BookingForm
+        booking={editingBooking}
+        onSave={handleBookingSave}
+        onCancel={handleBookingCancel}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Bookings Management</h2>
+          <p className="text-gray-600 mt-1">
+            Manage service bookings and appointments
+          </p>
+        </div>
+        <Button
+          onClick={() => setShowBookingForm(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          New Booking
+        </Button>
+      </div>
+
+      {/* Stats Cards */}
+      {stats && Object.keys(stats).length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalBookings || 0}</p>
+                </div>
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Today's Bookings</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.todayBookings || 0}</p>
+                </div>
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <Clock className="h-4 w-4 text-green-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">This Week</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.thisWeekBookings || 0}</p>
+                </div>
+                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                  <Calendar className="h-4 w-4 text-purple-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">This Month</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.thisMonthBookings || 0}</p>
+                </div>
+                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Calendar className="h-4 w-4 text-orange-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Filters and Search */}
+      <Card className="border-0 shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search bookings..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange('search', e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-64"
+                />
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                Filters
+                {getActiveFilterCount() > 0 && (
+                  <span className="ml-2 bg-blue-100 text-blue-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                    {getActiveFilterCount()}
+                  </span>
+                )}
+                {showFilters ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="border-gray-300 text-gray-700 hover:bg-gray-50"
+              >
+                Clear
+              </Button>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchBookings}
+              disabled={loading}
+              className="border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Loading...' : 'Refresh'}
+            </Button>
+          </div>
+        </CardHeader>
+
+        {/* Advanced Filters */}
+        {showFilters && (
+          <CardContent className="pt-0">
+            <Separator className="mb-4" />
+
+            {/* Active Filter Summary */}
+            {getActiveFilterCount() > 0 && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-blue-900">Active Filters:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {getActiveFilterSummary().map((filter, index) => (
+                        <span key={index} className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {filter}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="text-blue-700 border-blue-300 hover:bg-blue-100"
+                  >
+                    Clear All
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={(e) => handleFilterChange('status', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Status</option>
+                  {bookingStatuses.map((status) => (
+                    <option key={status.id} value={status.id}>
+                      {status.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Service Type</label>
+                <select
+                  value={filters.serviceType}
+                  onChange={(e) => handleFilterChange('serviceType', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">All Services</option>
+                  {serviceTypes.map((service) => (
+                    <option key={service.id} value={service.id}>
+                      {service.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">From Date</label>
+                <input
+                  type="date"
+                  value={filters.dateFrom}
+                  onChange={(e) => handleFilterChange('dateFrom', e.target.value)}
+                  max={filters.dateTo || undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">To Date</label>
+                <input
+                  type="date"
+                  value={filters.dateTo}
+                  onChange={(e) => handleFilterChange('dateTo', e.target.value)}
+                  min={filters.dateFrom || undefined}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </CardContent>
+        )}
+      </Card>
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <p className="text-lg font-medium text-gray-900">Loading bookings...</p>
+            <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the data</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && !loading && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="p-6">
+            <div className="flex items-start space-x-3">
+              <AlertCircle className="h-6 w-6 text-red-500 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-red-900">Unable to load bookings</h3>
+                <p className="text-red-700 mt-1">{error}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 border-red-300 text-red-700 hover:bg-red-100"
+                  onClick={fetchBookings}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Try Again
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Bookings List */}
+      {!loading && !error && (
+        <Card className="border-0 shadow-sm">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg font-semibold text-gray-900">
+                  All Bookings ({totalBookings})
+                </CardTitle>
+                <CardDescription className="text-gray-600">
+                  Manage and track all service bookings
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            {bookings.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-8 w-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No bookings found</h3>
+                <p className="text-gray-500 mb-4">
+                  {Object.values(filters).some(f => f)
+                    ? 'Try adjusting your filters to see more results.'
+                    : 'Get started by creating your first booking.'}
+                </p>
+                {!Object.values(filters).some(f => f) && (
+                  <Button
+                    onClick={() => setShowBookingForm(true)}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create First Booking
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Customer & Vehicle
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Service Details
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Schedule
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Booking ID
+                      </th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {bookings.map((booking) => (
+                      <tr key={booking.bookingId} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {booking.customerName}
+                              </p>
+                              <p className="text-sm text-gray-500 flex items-center">
+                                <Phone className="h-3 w-3 mr-1" />
+                                {booking.contactNumber || 'N/A'}
+                              </p>
+                              <p className="text-sm text-gray-500 flex items-center">
+                                <Car className="h-3 w-3 mr-1" />
+                                {booking.vehicleModel || 'N/A'}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {booking.vehicleRegNo}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <p className="font-medium text-gray-900">
+                              {getServiceTypeName(booking.serviceType)}
+                            </p>
+                            {booking.assignedTechnician && (
+                              <p className="text-gray-500 text-xs mt-1">
+                                Tech: {booking.assignedTechnician}
+                              </p>
+                            )}
+                            {booking.estimatedCost && (
+                              <p className="text-gray-500 text-xs">
+                                {booking.estimatedCost}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <p className="text-gray-900 font-medium">
+                              {formatDate(booking.preferredDate)}
+                            </p>
+                            <p className="text-gray-500">
+                              {formatTime(booking.preferredTime)}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-2">
+                            {getStatusBadge(booking.bookingStatus)}
+                            {getNextStatusOptions(booking.bookingStatus).length > 0 && (
+                              <select
+                                value=""
+                                onChange={(e) => {
+                                  if (e.target.value) {
+                                    handleStatusUpdate(booking.bookingId, e.target.value);
+                                    e.target.value = ''; // Reset the dropdown
+                                  }
+                                }}
+                                className="text-xs border border-gray-300 rounded px-2 py-1 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white hover:bg-gray-50 cursor-pointer"
+                                disabled={loading || updatingStatus[booking.bookingId]}
+                              >
+                                <option value="">
+                                  {updatingStatus[booking.bookingId] ? 'Updating...' : 'Update Status'}
+                                </option>
+                                {getNextStatusOptions(booking.bookingStatus).map((status) => (
+                                  <option key={status} value={status}>
+                                    {status.replace('_', ' ')}
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {updatingStatus[booking.bookingId] && (
+                              <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <p className="font-medium text-gray-900">
+                              {booking.bookingId}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewBooking(booking)}
+                              className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditBooking(booking)}
+                              className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteBooking(booking.bookingId)}
+                              className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Booking Details Modal */}
+      <BookingDetailsModal
+        booking={selectedBooking}
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false);
+          setSelectedBooking(null);
+        }}
+      />
+    </div>
+  );
+};
+
+export default BookingsManagement; 
