@@ -139,7 +139,7 @@ const BookingDetailsModal = ({ booking, isOpen, onClose }) => {
                 <div>
                   <p className="text-xs text-gray-500">Registration</p>
                   <p className="text-sm font-medium font-mono bg-gray-100 px-2 py-1 rounded text-xs">
-                    {booking.vehicleRegNo}
+                    {booking.vehicleRegistration || booking.vehicleRegNo}
                   </p>
                 </div>
               </CardContent>

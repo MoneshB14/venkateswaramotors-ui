@@ -27,6 +27,7 @@ import {
 import { useGlobal } from '../../contexts/GlobalContext';
 import { bookingsAPI } from '../../services/api';
 import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
+import { useToast } from '../../hooks/useToast';
 import BookingForm from './BookingForm';
 import BookingDetailsModal from './BookingDetailsModal';
 
@@ -54,6 +55,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const [totalBookings, setTotalBookings] = useState(0);
   const [updatingStatus, setUpdatingStatus] = useState({});
   const { confirmDelete } = useGlobal();
+  const { toast } = useToast();
 
   // Helper function to validate date range
   const isValidDateRange = (fromDate, toDate) => {
@@ -228,10 +230,18 @@ const BookingsManagement = ({ initialFilters = null }) => {
     fetchBookings();
   }, [filters, sortBy, sortOrder, currentPage, pageSize]);
 
-  // Show filters panel when initial filters are provided
+  // Apply initial filters when component mounts or initialFilters change
   useEffect(() => {
     if (initialFilters && Object.values(initialFilters).some(value => value)) {
+      setFilters({
+        status: initialFilters.status || '',
+        serviceType: initialFilters.serviceType || '',
+        dateFrom: initialFilters.dateFrom || '',
+        dateTo: initialFilters.dateTo || '',
+        search: initialFilters.search || ''
+      });
       setShowFilters(true);
+      
       // Show a toast notification about the applied filters
       const filterDescriptions = [];
       if (initialFilters.status) {
@@ -245,7 +255,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
         toast.success('Filters Applied', `Showing bookings with: ${filterDescriptions.join(', ')}`);
       }
     }
-  }, [initialFilters]);
+  }, [initialFilters, toast]);
 
   // Handle filter changes
   const handleFilterChange = (field, value) => {

@@ -67,15 +67,17 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         break;
       case 'todayAppointments':
         // Show today's bookings
-        const today = new Date().toISOString().split('T')[0];
-        filters = { dateFrom: today, dateTo: today };
+        const todayDate = new Date().toISOString().split('T')[0];
+        filters = { dateFrom: todayDate, dateTo: todayDate };
         break;
       case 'thisWeek':
-        // Show this week's bookings
-        const startOfWeek = new Date();
-        startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
-        const endOfWeek = new Date();
-        endOfWeek.setDate(endOfWeek.getDate() + (6 - endOfWeek.getDay()));
+        // Show this week's bookings (Monday to Sunday)
+        const currentDate = new Date();
+        const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const startOfWeek = new Date(currentDate);
+        startOfWeek.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Monday
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
         filters = {
           dateFrom: startOfWeek.toISOString().split('T')[0],
           dateTo: endOfWeek.toISOString().split('T')[0]
@@ -274,7 +276,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         <>
           {/* Primary Stats Row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 max-w-6xl mx-auto">
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('totalBookings')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('totalBookings')} title="Click to view all bookings">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -292,7 +294,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('pendingServices')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('pendingServices')} title="Click to view pending bookings">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -310,7 +312,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('completedServices')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('completedServices')} title="Click to view completed bookings">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -328,7 +330,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('todayAppointments')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('todayAppointments')} title="Click to view today's appointments">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -349,7 +351,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
 
           {/* Secondary Stats Row */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 max-w-4xl mx-auto">
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('thisWeek')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('thisWeek')} title="Click to view this week's bookings">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -367,7 +369,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('thisMonth')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('thisMonth')} title="Click to view this month's bookings">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -385,7 +387,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('cancelled')}>
+            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('cancelled')} title="Click to view cancelled bookings">
               <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
