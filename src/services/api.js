@@ -17,17 +17,17 @@ api.interceptors.response.use(
   (error) => {
     // Log the error for debugging
     console.error('API Error:', error);
-    
+
     if (error.response?.status === 401) {
       // Redirect to login on authentication error
       window.location.href = '/service/login';
     }
-    
+
     // Enhance error object with better error message extraction
     if (error.response?.data) {
       // Try to extract the most meaningful error message
       let errorMessage = 'An error occurred';
-      
+
       if (error.response.data.message) {
         errorMessage = error.response.data.message;
       } else if (error.response.data.error) {
@@ -35,11 +35,11 @@ api.interceptors.response.use(
       } else if (error.response.data.details) {
         errorMessage = error.response.data.details;
       }
-      
+
       // Create a more user-friendly error object
       error.userMessage = errorMessage;
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -157,8 +157,8 @@ export const bookingsAPI = {
   // Get all bookings with pagination
   getBookings: async (page = 0, size = 10) => {
     const response = await api.get('/service-center/bookings', {
-      params: { 
-        page, 
+      params: {
+        page,
         size,
         _t: Date.now() // Add timestamp to prevent caching
       }
@@ -169,8 +169,8 @@ export const bookingsAPI = {
   // Get bookings by status
   getBookingsByStatus: async (status, page = 0, size = 10) => {
     const response = await api.get(`/service-center/bookings/status/${status}`, {
-      params: { 
-        page, 
+      params: {
+        page,
         size,
         _t: Date.now() // Add timestamp to prevent caching
       }
@@ -181,7 +181,7 @@ export const bookingsAPI = {
   // Search bookings
   searchBookings: async (searchTerm) => {
     const response = await api.get('/service-center/bookings/search', {
-      params: { 
+      params: {
         q: searchTerm,
         _t: Date.now() // Add timestamp to prevent caching
       }
@@ -224,9 +224,9 @@ export const bookingsAPI = {
   // Get bookings by service type
   getBookingsByServiceType: async (serviceType, page = 0, size = 10) => {
     const response = await api.get('/service-center/bookings/get-bookings-by-service-type', {
-      params: { 
+      params: {
         serviceType,
-        page, 
+        page,
         size,
         _t: Date.now() // Add timestamp to prevent caching
       }
@@ -237,10 +237,10 @@ export const bookingsAPI = {
   // Get bookings by date range
   getBookingsByDateRange: async (fromDate, toDate, page = 0, size = 10) => {
     const response = await api.get('/service-center/bookings/get-bookings-by-from-date-to-date', {
-      params: { 
+      params: {
         fromDate,
         toDate,
-        page, 
+        page,
         size,
         _t: Date.now() // Add timestamp to prevent caching
       }
@@ -667,6 +667,17 @@ export const userManagementAPI = {
     const response = await api.get('/service-center/user-management/stats');
     return response.data;
   },
+};
+
+// Bill Generation API
+export const billGenerationAPI = {
+  // Get all bills
+  saveBill: async (billData) => {
+    const response = await api.post('/service-center/bookings/bills/save', billData);
+    return response.data;
+  },
+
+
 };
 
 export default api; 

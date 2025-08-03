@@ -22,7 +22,8 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
-  MoreHorizontal
+  MoreHorizontal,
+  FileText
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
 import { bookingsAPI } from '../../services/api';
@@ -30,6 +31,7 @@ import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
 import { useToast } from '../../hooks/useToast';
 import BookingForm from './BookingForm';
 import BookingDetailsModal from './BookingDetailsModal';
+import BillGenerationModal from './BillGenerationModal';
 
 const BookingsManagement = ({ initialFilters = null }) => {
   const [bookings, setBookings] = useState([]);
@@ -40,6 +42,8 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const [editingBooking, setEditingBooking] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showBillModal, setShowBillModal] = useState(false);
+  const [billBooking, setBillBooking] = useState(null);
   const [filters, setFilters] = useState({
     status: initialFilters?.status || '',
     serviceType: initialFilters?.serviceType || '',
@@ -185,28 +189,28 @@ const BookingsManagement = ({ initialFilters = null }) => {
         throw new Error('Failed to fetch bookings for combined filtering');
       }
 
-                  // Apply both filters on the client side
-            const filteredBookings = allBookingsResponse.bookings.filter(booking => {
-              // Service type filter - use service type name for matching
-              const serviceTypeName = getServiceTypeName(filters.serviceType);
-              const serviceTypeMatch = booking.serviceType === serviceTypeName;
-              
-              // Debug logging for service type matching
-              console.log('Filtering booking:', {
-                bookingServiceType: booking.serviceType,
-                filterServiceTypeName: serviceTypeName,
-                match: serviceTypeMatch
-              });
-              
-              // Date range filter
-              const bookingDate = new Date(booking.preferredDate);
-              const fromDate = new Date(formatDateForAPI(filters.dateFrom));
-              const toDate = new Date(formatDateForAPI(filters.dateTo));
-              toDate.setHours(23, 59, 59); // Include the entire to date
-              const dateMatch = bookingDate >= fromDate && bookingDate <= toDate;
-              
-              return serviceTypeMatch && dateMatch;
-            });
+      // Apply both filters on the client side
+      const filteredBookings = allBookingsResponse.bookings.filter(booking => {
+        // Service type filter - use service type name for matching
+        const serviceTypeName = getServiceTypeName(filters.serviceType);
+        const serviceTypeMatch = booking.serviceType === serviceTypeName;
+
+        // Debug logging for service type matching
+        console.log('Filtering booking:', {
+          bookingServiceType: booking.serviceType,
+          filterServiceTypeName: serviceTypeName,
+          match: serviceTypeMatch
+        });
+
+        // Date range filter
+        const bookingDate = new Date(booking.preferredDate);
+        const fromDate = new Date(formatDateForAPI(filters.dateFrom));
+        const toDate = new Date(formatDateForAPI(filters.dateTo));
+        toDate.setHours(23, 59, 59); // Include the entire to date
+        const dateMatch = bookingDate >= fromDate && bookingDate <= toDate;
+
+        return serviceTypeMatch && dateMatch;
+      });
 
       // Apply pagination
       const startIndex = currentPage * pageSize;
@@ -241,7 +245,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
         search: initialFilters.search || ''
       });
       setShowFilters(true);
-      
+
       // Show a toast notification about the applied filters
       const filterDescriptions = [];
       if (initialFilters.status) {
@@ -470,6 +474,31 @@ const BookingsManagement = ({ initialFilters = null }) => {
     };
 
     return statusFlow[currentStatus] || [];
+  };
+
+  // Handle generate bill
+  const handleGenerateBill = (booking) => {
+    setBillBooking(booking);
+    setShowBillModal(true);
+  };
+
+  // Handle bill save
+  const handleBillSave = async (billInfo) => {
+    try {
+      // Here you would typically save to your API
+      console.log('Saving bill:', billInfo);
+      // You can add API call here to save the bill
+      // await billAPI.saveBill(billInfo);
+    } catch (error) {
+      console.error('Error saving bill:', error);
+      throw error; // Re-throw so the modal can handle it
+    }
+  };
+
+  // Handle bill modal close
+  const handleBillModalClose = () => {
+    setShowBillModal(false);
+    setBillBooking(null);
   };
 
   if (showBookingForm) {
@@ -870,7 +899,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
                                     <ChevronDown className="h-3 w-3 text-gray-600" />
                                   )}
                                 </button>
-                                
+
                                 {/* Dropdown Menu */}
                                 <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
                                   <div className="py-1">
@@ -904,6 +933,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
                               size="sm"
                               onClick={() => handleViewBooking(booking)}
                               className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                              title="View Details"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -912,14 +942,25 @@ const BookingsManagement = ({ initialFilters = null }) => {
                               size="sm"
                               onClick={() => handleEditBooking(booking)}
                               className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                              title="Edit Booking"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
+                              onClick={() => handleGenerateBill(booking)}
+                              className="h-8 w-8 p-0 border-green-300 text-green-700 hover:bg-green-50"
+                              title="Generate Bill"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
                               onClick={() => handleDeleteBooking(booking.bookingId)}
                               className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
+                              title="Delete Booking"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -943,6 +984,14 @@ const BookingsManagement = ({ initialFilters = null }) => {
           setShowDetailsModal(false);
           setSelectedBooking(null);
         }}
+      />
+
+      {/* Bill Generation Modal */}
+      <BillGenerationModal
+        isOpen={showBillModal}
+        booking={billBooking}
+        onClose={handleBillModalClose}
+        onSave={handleBillSave}
       />
     </div>
   );
