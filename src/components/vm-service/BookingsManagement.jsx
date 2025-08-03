@@ -537,7 +537,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">This Week</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.thisWeekBookings || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.thisWeek || 0}</p>
                 </div>
                 <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
                   <Calendar className="h-4 w-4 text-purple-600" />
@@ -551,7 +551,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">{stats.thisMonthBookings || 0}</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.thisMonth || 0}</p>
                 </div>
                 <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
                   <Calendar className="h-4 w-4 text-orange-600" />
