@@ -30,15 +30,15 @@ const CollapsibleSidebar = ({
   const menuGroups = [
     {
       title: 'Core',
-      items: menuItems.filter(item => ['overview', 'bookings', 'customers', 'vehicles'].includes(item.id))
+      items: menuItems.filter(item => ['overview', 'bookings', 'customers'].includes(item.id))
     },
     {
       title: 'Management',
-      items: menuItems.filter(item => ['services', 'inventory', 'payments', 'reports'].includes(item.id))
+      items: menuItems.filter(item => ['inventory'].includes(item.id))
     },
     {
       title: 'System',
-      items: menuItems.filter(item => ['users', 'notifications', 'settings'].includes(item.id))
+      items: menuItems.filter(item => ['users'].includes(item.id))
     }
   ];
 

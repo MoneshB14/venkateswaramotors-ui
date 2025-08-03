@@ -3,32 +3,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Button } from '../ui/button';
 import {
   Users,
-  Wrench,
   Car,
   Calendar,
-  BarChart3,
-  FileText,
-  Bell,
-  Settings,
   Plus,
-  TrendingUp,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Phone,
-  Mail,
-  MapPin,
-  Eye,
-  Edit,
-  Trash2,
   RefreshCw,
   Loader2,
   ChevronRight,
-  Star,
-  DollarSign,
   Activity,
-  ArrowUpRight
+  ArrowUpRight,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { vmServiceOverview } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
@@ -219,23 +207,28 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
   };
 
   const renderOverview = () => (
-    <div className="space-y-6 w-full">
-      {/* Dashboard Header with Refresh Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-600 mt-1">Real-time analytics and insights</p>
+    <div className="space-y-8 w-full">
+      {/* Modern SaaS Dashboard Header */}
+      <div className="bg-gradient-to-br from-indigo-600 via-blue-700 to-blue-800 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent"></div>
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-white">Service Dashboard</h1>
+            <p className="text-blue-100 text-base font-medium">Monitor and manage your automotive service center</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              variant="outline"
+              size="default"
+              onClick={fetchDashboardData}
+              disabled={loading}
+              className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:border-white/50 backdrop-blur-sm"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              {loading ? 'Updating...' : 'Refresh Data'}
+            </Button>
+          </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={fetchDashboardData}
-          disabled={loading}
-          className="border-gray-300 text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
-        >
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          {loading ? 'Refreshing...' : 'Refresh Dashboard'}
-        </Button>
       </div>
 
       {/* Loading State */}
@@ -275,167 +268,187 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
       {dashboardStats && (
         <>
           {/* Primary Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 max-w-6xl mx-auto">
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('totalBookings')} title="Click to view all bookings">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
+            <Card className="group cursor-pointer border border-blue-200 shadow-lg bg-white hover:shadow-xl hover:border-blue-300 hover:bg-gradient-to-br hover:from-white hover:to-blue-50 transition-all duration-300 overflow-hidden" onClick={() => handleCardClick('totalBookings')} title="Click to view all bookings">
+              <CardHeader className="pb-3 px-6 pt-6 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">Total Bookings</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                      <Calendar className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900">Total Bookings</CardTitle>
+                      <p className="text-sm text-blue-600 font-semibold">All time</p>
+                    </div>
                   </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors flex-shrink-0">
-                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                  </div>
+                  <ArrowUpRight className="h-5 w-5 text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{dashboardStats.totalBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">All time bookings</p>
+              <CardContent className="px-6 pb-6 bg-white">
+                <div className="text-3xl font-bold text-gray-900 mb-2">{dashboardStats.totalBookings}</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-100 rounded-full">
+                    <TrendingUp className="h-3 w-3 text-emerald-600" />
+                    <span className="text-xs text-emerald-700 font-semibold">+12%</span>
+                  </div>
+                  <span className="text-sm text-gray-600">vs last month</span>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('pendingServices')} title="Click to view pending bookings">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
+            <Card className="group cursor-pointer border border-amber-200 shadow-lg bg-white hover:shadow-xl hover:border-amber-300 hover:bg-gradient-to-br hover:from-white hover:to-amber-50 transition-all duration-300 overflow-hidden" onClick={() => handleCardClick('pendingServices')} title="Click to view pending bookings">
+              <CardHeader className="pb-3 px-6 pt-6 bg-gradient-to-r from-amber-50 to-orange-50">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">Pending Services</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-md">
+                      <Clock className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900">Pending Services</CardTitle>
+                      <p className="text-sm text-amber-600 font-semibold">In queue</p>
+                    </div>
                   </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-amber-100 rounded-lg flex items-center justify-center group-hover:bg-amber-200 transition-colors flex-shrink-0">
-                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
-                  </div>
+                  <ArrowUpRight className="h-5 w-5 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{dashboardStats.pendingBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">Awaiting completion</p>
+              <CardContent className="px-6 pb-6 bg-white">
+                <div className="text-3xl font-bold text-gray-900 mb-2">{dashboardStats.pendingBookings}</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-amber-100 rounded-full">
+                    <Clock className="h-3 w-3 text-amber-600" />
+                    <span className="text-xs text-amber-700 font-semibold">Urgent</span>
+                  </div>
+                  <span className="text-sm text-gray-600">requires attention</span>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('completedServices')} title="Click to view completed bookings">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
+            <Card className="group cursor-pointer border border-emerald-200 shadow-lg bg-white hover:shadow-xl hover:border-emerald-300 hover:bg-gradient-to-br hover:from-white hover:to-emerald-50 transition-all duration-300 overflow-hidden" onClick={() => handleCardClick('completedServices')} title="Click to view completed bookings">
+              <CardHeader className="pb-3 px-6 pt-6 bg-gradient-to-r from-emerald-50 to-green-50">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">Completed Services</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center shadow-md">
+                      <CheckCircle className="h-6 w-6 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-bold text-gray-900">Completed</CardTitle>
+                      <p className="text-sm text-emerald-600 font-semibold">This month</p>
+                    </div>
                   </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors flex-shrink-0">
-                    <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600" />
-                  </div>
+                  <ArrowUpRight className="h-5 w-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{dashboardStats.completedBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">Successfully completed</p>
+              <CardContent className="px-6 pb-6 bg-white">
+                <div className="text-3xl font-bold text-gray-900 mb-2">{dashboardStats.completedBookings}</div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 px-2 py-1 bg-emerald-100 rounded-full">
+                    <CheckCircle className="h-3 w-3 text-emerald-600" />
+                    <span className="text-xs text-emerald-700 font-semibold">Done</span>
+                  </div>
+                  <span className="text-sm text-gray-600">successfully finished</span>
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[100px] sm:min-h-[120px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('todayAppointments')} title="Click to view today's appointments">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">Today's Appointments</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  </div>
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors flex-shrink-0">
-                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-1">{dashboardStats.todayBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">Scheduled for today</p>
-              </CardContent>
-            </Card>
           </div>
 
-          {/* Secondary Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 lg:gap-4 max-w-4xl mx-auto">
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('thisWeek')} title="Click to view this week's bookings">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">This Week</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  </div>
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors flex-shrink-0">
-                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-blue-600" />
-                  </div>
+          {/* Quick Stats Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 max-w-6xl mx-auto">
+            <div className="bg-white rounded-xl p-5 shadow-md border border-indigo-100 hover:shadow-lg hover:border-indigo-200 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-indigo-600 uppercase tracking-wide">Today</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.todayBookings}</p>
                 </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">{dashboardStats.thisWeekBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">Bookings this week</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('thisMonth')} title="Click to view this month's bookings">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">This Month</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  </div>
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors flex-shrink-0">
-                    <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-                  </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
+                  <Calendar className="h-6 w-6 text-white" />
                 </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">{dashboardStats.thisMonthBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">Bookings this month</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-0 shadow-sm bg-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 group min-h-[80px] sm:min-h-[100px] flex flex-col cursor-pointer relative overflow-hidden" onClick={() => handleCardClick('cancelled')} title="Click to view cancelled bookings">
-              <CardHeader className="pb-2 sm:pb-3 flex-shrink-0 px-3 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="text-xs sm:text-sm font-bold text-gray-800 truncate">Cancelled</CardTitle>
-                    <ArrowUpRight className="h-5 w-5 text-red-600 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                  </div>
-                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-100 rounded-lg flex items-center justify-center group-hover:bg-red-200 transition-colors flex-shrink-0">
-                    <XCircle className="h-3 w-3 sm:h-4 sm:w-4 text-red-600" />
-                  </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-5 shadow-md border border-purple-100 hover:shadow-lg hover:border-purple-200 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-purple-600 uppercase tracking-wide">This Week</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.thisWeekBookings}</p>
                 </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-center px-3 sm:px-6 pb-3 sm:pb-6">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-1">{dashboardStats.cancelledBookings}</div>
-                <p className="text-xs sm:text-sm text-gray-600 font-medium break-words">Cancelled bookings</p>
-              </CardContent>
-            </Card>
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
+                  <TrendingUp className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-5 shadow-md border border-blue-100 hover:shadow-lg hover:border-blue-200 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-blue-600 uppercase tracking-wide">This Month</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.thisMonthBookings}</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-md">
+                  <BarChart3 className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white rounded-xl p-5 shadow-md border border-red-100 hover:shadow-lg hover:border-red-200 transition-all duration-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-red-600 uppercase tracking-wide">Cancelled</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.cancelledBookings}</p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
+                  <XCircle className="h-6 w-6 text-white" />
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 sm:gap-6 max-w-7xl mx-auto">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
         {/* Today's Bookings */}
         <div className="xl:col-span-2">
-          <Card className="border-0 shadow-sm">
-            <CardHeader className="border-b bg-gray-50 px-4 sm:px-6 py-4">
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Today's Bookings</CardTitle>
-                <CardDescription className="text-gray-600 mt-1">
-                  Appointments scheduled for today
-                </CardDescription>
+          <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 overflow-hidden">
+            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-indigo-50 via-white to-purple-50 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Calendar className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-gray-900">Today's Schedule</CardTitle>
+                    <CardDescription className="text-gray-600 mt-1 font-medium">
+                      {todayBookings.length} appointment{todayBookings.length !== 1 ? 's' : ''} scheduled
+                    </CardDescription>
+                  </div>
+                </div>
+                {todayBookings.length > 0 && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full shadow-md">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <span className="text-sm font-semibold text-white">Active</span>
+                  </div>
+                )}
               </div>
             </CardHeader>
             <CardContent className="p-0">
               {todayBookings.length === 0 ? (
-                <div className="text-center py-12 sm:py-16">
-                  <div className="w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                    <span className="text-2xl sm:text-3xl">🎉</span>
+                <div className="text-center py-16 sm:py-20">
+                  <div className="w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-lg">
+                    <Calendar className="h-10 w-10 text-indigo-500" />
                   </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">You're all caught up!</h3>
-                  <p className="text-gray-600 mb-2">No bookings scheduled for today.</p>
-                  <p className="text-sm text-gray-500">Enjoy your time and stay productive!</p>
-                  <div className="mt-4 sm:mt-6">
-                    <Button variant="outline" size="sm" className="border-gray-300 text-gray-700 hover:bg-gray-50">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Schedule New Appointment
-                    </Button>
-                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Schedule is clear</h3>
+                  <p className="text-gray-600 mb-2 text-base">No appointments scheduled for today.</p>
+                  <p className="text-sm text-gray-500 mb-6">Perfect time to focus on other important tasks.</p>
+                  <Button 
+                    variant="outline" 
+                    size="default" 
+                    onClick={() => onMenuClick('bookings')}
+                    className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 shadow-md hover:shadow-lg transition-all duration-200"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Schedule New Appointment
+                  </Button>
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -482,48 +495,59 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
 
         {/* Quick Actions */}
         <div className="xl:col-span-1">
-          <Card className="border-0 shadow-sm h-fit">
-            <CardHeader className="border-b bg-gray-50 px-4 sm:px-6 py-4">
-              <CardTitle className="text-lg font-semibold text-gray-900">Quick Actions</CardTitle>
-              <CardDescription className="text-gray-600 mt-1">
-                Common tasks and shortcuts
-              </CardDescription>
+          <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 h-fit overflow-hidden">
+            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-blue-50 via-white to-indigo-50 px-6 py-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Activity className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl font-bold text-gray-900">Quick Actions</CardTitle>
+                  <CardDescription className="text-gray-600 mt-1 font-medium">
+                    Fast access to key features
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent className="p-4 sm:p-6 space-y-3">
-              <Button className="w-full justify-start h-12 sm:h-14 text-left bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl" variant="outline">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                  <Plus className="h-4 sm:h-5 w-4 sm:w-5 text-blue-600" />
+            <CardContent className="p-6 space-y-4">
+              <Button 
+                onClick={() => onMenuClick('bookings')}
+                className="w-full justify-start h-16 text-left bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl group"
+              >
+                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mr-4 group-hover:bg-white/30 transition-colors">
+                  <Plus className="h-6 w-6 text-white" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm">New Appointment</div>
-                  <div className="text-xs text-gray-500">Schedule a new service</div>
+                  <div className="font-bold text-base">New Booking</div>
+                  <div className="text-sm text-indigo-100">Schedule a service appointment</div>
                 </div>
               </Button>
-              <Button className="w-full justify-start h-12 sm:h-14 text-left bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl" variant="outline">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                  <Users className="h-4 sm:h-5 w-4 sm:w-5 text-green-600" />
+              
+              <Button 
+                onClick={() => onMenuClick('customers')}
+                className="w-full justify-start h-14 text-left bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 text-gray-700 border border-gray-200 hover:border-blue-300 shadow-md hover:shadow-lg transition-all duration-300 rounded-xl group"
+                variant="outline"
+              >
+                <div className="w-10 h-10 bg-blue-100 group-hover:bg-blue-200 rounded-xl flex items-center justify-center mr-3 transition-colors">
+                  <Users className="h-5 w-5 text-blue-600" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm">Add Customer</div>
-                  <div className="text-xs text-gray-500">Register new customer</div>
+                  <div className="font-semibold text-sm">Manage Customers</div>
+                  <div className="text-xs text-gray-500">View and edit customer records</div>
                 </div>
               </Button>
-              <Button className="w-full justify-start h-12 sm:h-14 text-left bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl" variant="outline">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                  <Car className="h-4 sm:h-5 w-4 sm:w-5 text-purple-600" />
+              
+              <Button 
+                onClick={() => onMenuClick('inventory')}
+                className="w-full justify-start h-14 text-left bg-white hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 text-gray-700 border border-gray-200 hover:border-purple-300 shadow-md hover:shadow-lg transition-all duration-300 rounded-xl group"
+                variant="outline"
+              >
+                <div className="w-10 h-10 bg-purple-100 group-hover:bg-purple-200 rounded-xl flex items-center justify-center mr-3 transition-colors">
+                  <Car className="h-5 w-5 text-purple-600" />
                 </div>
                 <div>
-                  <div className="font-bold text-sm">Register Vehicle</div>
-                  <div className="text-xs text-gray-500">Add vehicle details</div>
-                </div>
-              </Button>
-              <Button className="w-full justify-start h-12 sm:h-14 text-left bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl" variant="outline">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3 sm:mr-4">
-                  <FileText className="h-4 sm:h-5 w-4 sm:w-5 text-orange-600" />
-                </div>
-                <div>
-                  <div className="font-bold text-sm">Generate Report</div>
-                  <div className="text-xs text-gray-500">Create service reports</div>
+                  <div className="font-semibold text-sm">Check Inventory</div>
+                  <div className="text-xs text-gray-500">Monitor parts and supplies</div>
                 </div>
               </Button>
             </CardContent>
@@ -532,22 +556,40 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
       </div>
 
       {/* Recent Activity */}
-      <Card className="border-0 shadow-sm max-w-7xl mx-auto">
-        <CardHeader className="border-b bg-gray-50 px-4 sm:px-6 py-4">
-          <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
-          <CardDescription className="text-gray-600 mt-1">
-            Latest service activities and updates
-          </CardDescription>
+      <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 max-w-7xl mx-auto overflow-hidden">
+        <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-gray-600 to-gray-700 rounded-xl flex items-center justify-center shadow-lg">
+                <Activity className="h-6 w-6 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold text-gray-900">Recent Activity</CardTitle>
+                <CardDescription className="text-gray-600 mt-1 font-medium">
+                  Latest bookings and system updates
+                </CardDescription>
+              </div>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => onMenuClick('bookings')}
+              className="hidden sm:flex border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              View All
+              <ArrowUpRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           {recentBookings.length === 0 ? (
-            <div className="text-center py-12 sm:py-16">
-              <div className="w-16 sm:w-20 h-16 sm:h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                <Activity className="h-6 sm:h-8 w-6 sm:w-8 text-blue-600" />
+            <div className="text-center py-16 sm:py-20">
+              <div className="w-20 sm:w-24 h-20 sm:h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-6 sm:mb-8 shadow-lg">
+                <Activity className="h-10 w-10 text-gray-500" />
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">No recent activity</h3>
-              <p className="text-gray-600 mb-2">Activity will appear here as bookings are processed.</p>
-              <p className="text-sm text-gray-500">Start by creating your first appointment!</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">No recent activity</h3>
+              <p className="text-gray-600 mb-2 text-base">Recent bookings and updates will appear here.</p>
+              <p className="text-sm text-gray-500">Start by creating your first service appointment.</p>
             </div>
           ) : (
             <div className="divide-y divide-gray-100">
@@ -611,221 +653,9 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
     <CustomersManagement />
   );
 
-  const renderServices = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Services</h2>
-          <p className="text-muted-foreground">
-            Manage service types and ongoing service requests
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Service
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Service Management</CardTitle>
-          <CardDescription>
-            Track and manage all service activities
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Service management interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
+  // Keep only the essential, working render functions
   const renderInventory = () => (
     <InventoryManagement />
-  );
-
-  const renderVehicles = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Vehicles</h2>
-          <p className="text-muted-foreground">
-            Manage vehicle information and service history
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Vehicle
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Vehicle Database</CardTitle>
-          <CardDescription>
-            View and manage all registered vehicles
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Vehicle management interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderAppointments = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Appointments</h2>
-          <p className="text-muted-foreground">
-            Schedule and manage customer appointments
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Appointment
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Appointment Calendar</CardTitle>
-          <CardDescription>
-            View and manage scheduled appointments
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Appointment scheduling interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderReports = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Reports</h2>
-          <p className="text-muted-foreground">
-            Analytics and business insights
-          </p>
-        </div>
-        <Button>
-          <BarChart3 className="mr-2 h-4 w-4" />
-          Generate Report
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Analytics Dashboard</CardTitle>
-          <CardDescription>
-            View business metrics and performance data
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Analytics and reporting interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderDocuments = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Documents</h2>
-          <p className="text-muted-foreground">
-            Manage service records and documentation
-          </p>
-        </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Upload Document
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Document Management</CardTitle>
-          <CardDescription>
-            Store and organize service records
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Document management interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderNotifications = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Notifications</h2>
-          <p className="text-muted-foreground">
-            System alerts and notifications
-          </p>
-        </div>
-        <Button variant="outline">
-          <Bell className="mr-2 h-4 w-4" />
-          Mark All Read
-        </Button>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Center</CardTitle>
-          <CardDescription>
-            View and manage system notifications
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Notification management interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  const renderSettings = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">Settings</h2>
-          <p className="text-muted-foreground">
-            Configure system preferences and options
-          </p>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>System Configuration</CardTitle>
-          <CardDescription>
-            Manage application settings and preferences
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Settings configuration interface will be implemented here.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
   );
 
   const renderUsers = () => <UserManagement />;
@@ -834,14 +664,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
     overview: renderOverview,
     bookings: renderBookings,
     customers: renderCustomers,
-    services: renderServices,
     inventory: renderInventory,
-    vehicles: renderVehicles,
-    appointments: renderAppointments,
-    reports: renderReports,
-    documents: renderDocuments,
-    notifications: renderNotifications,
-    settings: renderSettings,
     users: renderUsers
   };
 

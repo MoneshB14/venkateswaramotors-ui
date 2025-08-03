@@ -1,24 +1,10 @@
 import {
   LayoutDashboard,
   Users,
-  Settings,
   Calendar,
-  BarChart3,
-  Wrench,
-  Car,
-  Bell,
   UserPlus,
-  FileText,
-  DollarSign,
   Package,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  TrendingUp,
-  PieChart,
-  ClipboardList,
-  MessageSquare,
-  Shield
+  MessageSquare
 } from 'lucide-react';
 
 export const menuItems = [
@@ -44,39 +30,11 @@ export const menuItems = [
     description: 'Manage customer information and history'
   },
   {
-    id: 'vehicles',
-    title: 'Vehicles',
-    icon: Car,
-    href: '/dashboard/vehicles',
-    description: 'Vehicle information and service history'
-  },
-  {
-    id: 'services',
-    title: 'Services',
-    icon: Wrench,
-    href: '/dashboard/services',
-    description: 'Service types and ongoing work'
-  },
-  {
     id: 'inventory',
     title: 'Inventory',
     icon: Package,
     href: '/dashboard/inventory',
     description: 'Manage spare parts and stock'
-  },
-  {
-    id: 'payments',
-    title: 'Payments',
-    icon: DollarSign,
-    href: '/dashboard/payments',
-    description: 'Track payments and invoices'
-  },
-  {
-    id: 'reports',
-    title: 'Reports',
-    icon: BarChart3,
-    href: '/dashboard/reports',
-    description: 'Analytics and business insights'
   },
   {
     id: 'users',
@@ -85,20 +43,6 @@ export const menuItems = [
     href: '/dashboard/users',
     description: 'Manage staff and admin users',
     adminOnly: true
-  },
-  {
-    id: 'notifications',
-    title: 'Notifications',
-    icon: Bell,
-    href: '/dashboard/notifications',
-    description: 'System alerts and reminders'
-  },
-  {
-    id: 'settings',
-    title: 'Settings',
-    icon: Settings,
-    href: '/dashboard/settings',
-    description: 'System configuration and preferences'
   }
 ];
 

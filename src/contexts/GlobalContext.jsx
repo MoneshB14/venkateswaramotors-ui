@@ -22,6 +22,8 @@ export const GlobalProvider = ({ children }) => {
     cancelText: 'Cancel',
     variant: 'default',
     icon: null,
+    loading: false,
+    priority: 'medium',
     onConfirm: () => {},
   });
 
@@ -54,6 +56,7 @@ export const GlobalProvider = ({ children }) => {
     cancelText = 'Cancel',
     variant = 'default',
     icon = null,
+    priority = 'medium',
     onConfirm
   }) => {
     setConfirmationDialog({
@@ -64,9 +67,20 @@ export const GlobalProvider = ({ children }) => {
       cancelText,
       variant,
       icon,
-      onConfirm: () => {
+      priority,
+      loading: false,
+      onConfirm: async () => {
         if (onConfirm) {
-          onConfirm();
+          // Set loading state
+          setConfirmationDialog(prev => ({ ...prev, loading: true }));
+          try {
+            await onConfirm();
+          } catch (error) {
+            console.error('Confirmation action failed:', error);
+          } finally {
+            // Reset loading state
+            setConfirmationDialog(prev => ({ ...prev, loading: false }));
+          }
         }
       },
     });
@@ -80,7 +94,8 @@ export const GlobalProvider = ({ children }) => {
   const confirmDelete = useCallback(({
     itemName = 'item',
     onConfirm,
-    customMessage = null
+    customMessage = null,
+    priority = 'high'
   }) => {
     showConfirmation({
       title: 'Confirm Delete',
@@ -89,6 +104,7 @@ export const GlobalProvider = ({ children }) => {
       cancelText: 'Cancel',
       variant: 'destructive',
       icon: 'Trash2',
+      priority,
       onConfirm,
     });
   }, [showConfirmation]);
@@ -106,6 +122,69 @@ export const GlobalProvider = ({ children }) => {
       onConfirm,
       variant,
       icon,
+    });
+  }, [showConfirmation]);
+
+  // Additional convenience functions for new variants
+  const confirmSuccess = useCallback(({
+    title = 'Confirm Success',
+    message,
+    onConfirm,
+    confirmText = 'Continue'
+  }) => {
+    showConfirmation({
+      title,
+      message,
+      confirmText,
+      variant: 'success',
+      onConfirm,
+    });
+  }, [showConfirmation]);
+
+  const confirmInfo = useCallback(({
+    title = 'Information',
+    message,
+    onConfirm,
+    confirmText = 'OK'
+  }) => {
+    showConfirmation({
+      title,
+      message,
+      confirmText,
+      variant: 'info',
+      onConfirm,
+    });
+  }, [showConfirmation]);
+
+  const confirmWarning = useCallback(({
+    title = 'Warning',
+    message,
+    onConfirm,
+    confirmText = 'Proceed'
+  }) => {
+    showConfirmation({
+      title,
+      message,
+      confirmText,
+      variant: 'warning',
+      priority: 'high',
+      onConfirm,
+    });
+  }, [showConfirmation]);
+
+  const confirmCritical = useCallback(({
+    title = 'Critical Action',
+    message,
+    onConfirm,
+    confirmText = 'I Understand, Proceed'
+  }) => {
+    showConfirmation({
+      title,
+      message,
+      confirmText,
+      variant: 'destructive',
+      priority: 'critical',
+      onConfirm,
     });
   }, [showConfirmation]);
 
@@ -181,6 +260,10 @@ export const GlobalProvider = ({ children }) => {
     closeConfirmation,
     confirmDelete,
     confirmAction,
+    confirmSuccess,
+    confirmInfo,
+    confirmWarning,
+    confirmCritical,
     
     // API response handlers
     handleApiResponse,
@@ -203,6 +286,8 @@ export const GlobalProvider = ({ children }) => {
         cancelText={confirmationDialog.cancelText}
         variant={confirmationDialog.variant}
         icon={confirmationDialog.icon}
+        loading={confirmationDialog.loading}
+        priority={confirmationDialog.priority}
       />
     </GlobalContext.Provider>
   );

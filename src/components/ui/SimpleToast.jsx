@@ -36,10 +36,10 @@ const SimpleToast = ({ id, title, description, variant = 'default', onClose, ind
 
   return (
     <div
-      className={`fixed top-4 right-4 z-50 max-w-sm w-full border rounded-lg shadow-lg p-4 transition-all duration-300 ease-in-out ${getVariantStyles()}`}
+      className={`fixed bottom-4 right-4 z-50 max-w-sm w-full border rounded-lg shadow-lg p-4 transition-all duration-300 ease-in-out ${getVariantStyles()}`}
       style={{ 
         animation: 'slideIn 0.3s ease-out',
-        top: `${4 + (index * 80)}px`
+        bottom: `${4 + (index * 80)}px`
       }}
     >
       <div className="flex items-start space-x-3">
