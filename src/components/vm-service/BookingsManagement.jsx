@@ -24,7 +24,9 @@ import {
   ChevronUp,
   MoreHorizontal,
   FileText,
-  Receipt
+  Receipt,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
 import { bookingsAPI, billGenerationAPI } from '../../services/api';
@@ -1102,6 +1104,137 @@ const BookingsManagement = ({ initialFilters = null }) => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {bookings.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm text-gray-700">Show:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => {
+                        setPageSize(Number(e.target.value));
+                        setCurrentPage(0); // Reset to first page when changing page size
+                      }}
+                      className="px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value={10}>10</option>
+                      <option value={25}>25</option>
+                      <option value={50}>50</option>
+                      <option value={100}>100</option>
+                    </select>
+                    <span className="text-sm text-gray-700">entries</span>
+                  </div>
+                  
+                  <div className="text-sm text-gray-700">
+                    Showing {Math.min(currentPage * pageSize + 1, totalBookings)} to {Math.min((currentPage + 1) * pageSize, totalBookings)} of {totalBookings} bookings
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                    disabled={currentPage === 0}
+                    className="h-8 px-3 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+
+                  {/* Page Numbers */}
+                  <div className="flex items-center space-x-1">
+                    {(() => {
+                      const totalPages = Math.ceil(totalBookings / pageSize);
+                      const maxVisiblePages = 5;
+                      let startPage = Math.max(0, Math.min(currentPage - Math.floor(maxVisiblePages / 2), totalPages - maxVisiblePages));
+                      let endPage = Math.min(startPage + maxVisiblePages, totalPages);
+
+                      // Adjust if we're near the end
+                      if (endPage - startPage < maxVisiblePages && startPage > 0) {
+                        startPage = Math.max(0, endPage - maxVisiblePages);
+                      }
+
+                      const pages = [];
+                      
+                      // First page
+                      if (startPage > 0) {
+                        pages.push(
+                          <Button
+                            key="first"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(0)}
+                            className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                          >
+                            1
+                          </Button>
+                        );
+                        if (startPage > 1) {
+                          pages.push(
+                            <span key="dots1" className="px-2 text-gray-500">...</span>
+                          );
+                        }
+                      }
+
+                      // Visible pages
+                      for (let i = startPage; i < endPage; i++) {
+                        pages.push(
+                          <Button
+                            key={i}
+                            variant={currentPage === i ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setCurrentPage(i)}
+                            className={`h-8 w-8 p-0 ${
+                              currentPage === i 
+                                ? "bg-blue-600 text-white border-blue-600" 
+                                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                            }`}
+                          >
+                            {i + 1}
+                          </Button>
+                        );
+                      }
+
+                      // Last page
+                      if (endPage < totalPages) {
+                        if (endPage < totalPages - 1) {
+                          pages.push(
+                            <span key="dots2" className="px-2 text-gray-500">...</span>
+                          );
+                        }
+                        pages.push(
+                          <Button
+                            key="last"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(totalPages - 1)}
+                            className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                          >
+                            {totalPages}
+                          </Button>
+                        );
+                      }
+
+                      return pages;
+                    })()}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(Math.min(Math.ceil(totalBookings / pageSize) - 1, currentPage + 1))}
+                    disabled={currentPage >= Math.ceil(totalBookings / pageSize) - 1}
+                    className="h-8 px-3 border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </CardContent>

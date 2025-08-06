@@ -374,45 +374,152 @@ export const servicesAPI = {
 
 // Inventory Management API
 export const inventoryAPI = {
-  // Get all inventory items
-  getInventory: async (filters = {}) => {
-    const response = await api.get('/service-center/inventory', { params: filters });
+  // Get all inventory items with pagination and filters
+  getInventoryItems: async (params = {}) => {
+    const response = await api.get('/service-center/inventory/items', { params });
     return response.data;
   },
 
   // Get inventory item by ID
-  getInventoryItemById: async (id) => {
-    const response = await api.get(`/service-center/inventory/${id}`);
+  getInventoryItemById: async (itemId) => {
+    const response = await api.get(`/service-center/inventory/items/${itemId}`);
+    return response.data;
+  },
+
+  // Get inventory item by code
+  getInventoryItemByCode: async (itemCode) => {
+    const response = await api.get(`/service-center/inventory/items/code/${itemCode}`);
     return response.data;
   },
 
   // Create new inventory item
   createInventoryItem: async (itemData) => {
-    const response = await api.post('/service-center/inventory', itemData);
+    const response = await api.post('/service-center/inventory/items', itemData);
     return response.data;
   },
 
   // Update inventory item
-  updateInventoryItem: async (id, itemData) => {
-    const response = await api.put(`/service-center/inventory/${id}`, itemData);
+  updateInventoryItem: async (itemId, itemData) => {
+    const response = await api.put(`/service-center/inventory/items/${itemId}`, itemData);
     return response.data;
   },
 
   // Delete inventory item
-  deleteInventoryItem: async (id) => {
-    const response = await api.delete(`/service-center/inventory/${id}`);
+  deleteInventoryItem: async (itemId) => {
+    const response = await api.delete(`/service-center/inventory/items/${itemId}`);
     return response.data;
   },
 
-  // Update stock quantity
-  updateStockQuantity: async (id, quantity) => {
-    const response = await api.patch(`/service-center/inventory/${id}/stock`, { quantity });
+  // Adjust stock
+  adjustStock: async (stockData) => {
+    const response = await api.post('/service-center/inventory/items/stock-adjustment', stockData);
     return response.data;
   },
 
   // Get low stock items
   getLowStockItems: async () => {
-    const response = await api.get('/service-center/inventory/low-stock');
+    const response = await api.get('/service-center/inventory/items/low-stock');
+    return response.data;
+  },
+
+  // Get out of stock items
+  getOutOfStockItems: async () => {
+    const response = await api.get('/service-center/inventory/items/out-of-stock');
+    return response.data;
+  },
+
+  // Get items by category
+  getItemsByCategory: async (category) => {
+    const response = await api.get(`/service-center/inventory/items/category/${category}`);
+    return response.data;
+  },
+
+  // Get items by status
+  getItemsByStatus: async (status) => {
+    const response = await api.get(`/service-center/inventory/items/status/${status}`);
+    return response.data;
+  },
+
+  // Get item transaction history
+  getItemTransactionHistory: async (itemId, params = {}) => {
+    const response = await api.get(`/service-center/inventory/items/${itemId}/transactions`, { params });
+    return response.data;
+  },
+
+  // Get inventory statistics
+  getInventoryStats: async () => {
+    const response = await api.get('/service-center/inventory/stats');
+    return response.data;
+  },
+};
+
+// Suppliers Management API
+export const suppliersAPI = {
+  // Get all suppliers with pagination and filters
+  getSuppliers: async (params = {}) => {
+    const response = await api.get('/service-center/inventory/suppliers', { params });
+    return response.data;
+  },
+
+  // Get supplier by ID
+  getSupplierById: async (supplierId) => {
+    const response = await api.get(`/service-center/inventory/suppliers/${supplierId}`);
+    return response.data;
+  },
+
+  // Get supplier by code
+  getSupplierByCode: async (supplierCode) => {
+    const response = await api.get(`/service-center/inventory/suppliers/code/${supplierCode}`);
+    return response.data;
+  },
+
+  // Create new supplier
+  createSupplier: async (supplierData) => {
+    const response = await api.post('/service-center/inventory/suppliers', supplierData);
+    return response.data;
+  },
+
+  // Update supplier
+  updateSupplier: async (supplierId, supplierData) => {
+    const response = await api.put(`/service-center/inventory/suppliers/${supplierId}`, supplierData);
+    return response.data;
+  },
+
+  // Delete supplier
+  deleteSupplier: async (supplierId) => {
+    const response = await api.delete(`/service-center/inventory/suppliers/${supplierId}`);
+    return response.data;
+  },
+
+  // Toggle supplier status
+  toggleSupplierStatus: async (supplierId, isActive) => {
+    const response = await api.patch(`/service-center/inventory/suppliers/${supplierId}/status`, null, {
+      params: { isActive }
+    });
+    return response.data;
+  },
+
+  // Get suppliers by city
+  getSuppliersByCity: async (city) => {
+    const response = await api.get(`/service-center/inventory/suppliers/city/${city}`);
+    return response.data;
+  },
+
+  // Get suppliers by state
+  getSuppliersByState: async (state) => {
+    const response = await api.get(`/service-center/inventory/suppliers/state/${state}`);
+    return response.data;
+  },
+
+  // Get suppliers by specialization
+  getSuppliersBySpecialization: async (specialization) => {
+    const response = await api.get(`/service-center/inventory/suppliers/specialization/${specialization}`);
+    return response.data;
+  },
+
+  // Get supplier statistics
+  getSupplierStats: async () => {
+    const response = await api.get('/service-center/inventory/suppliers/stats');
     return response.data;
   },
 };

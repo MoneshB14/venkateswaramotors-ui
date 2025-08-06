@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
-import { Toaster } from './components/ui/Toaster';
+import { Toaster } from 'react-hot-toast';
 import { GlobalProvider } from './contexts/GlobalContext';
 
 // VM Service Components
@@ -44,7 +44,19 @@ function App() {
               <Route path="*" element={<Navigate to="/service" replace />} />
               </Routes>
             </div>
-            <Toaster />
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  background: '#fff',
+                  color: '#333',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                },
+              }}
+            />
           </Router>
         </GlobalProvider>
       </AuthProvider>

@@ -16,18 +16,41 @@ import {
   Activity,
   ArrowUpRight,
   TrendingUp,
-  BarChart3
+  BarChart3,
+  Package,
+  AlertTriangle,
+  DollarSign
 } from 'lucide-react';
-import { vmServiceOverview } from '../../services/api';
+import { vmServiceOverview, inventoryAPI } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import BookingDetailsModal from './BookingDetailsModal';
 import BookingsManagement from './BookingsManagement';
 import CustomersManagement from './CustomersManagement';
-import InventoryManagement from './InventoryManagement';
+import InventoryManagementRouter from './InventoryManagementRouter';
 import UserManagement from './UserManagement';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line
+} from 'recharts';
 
 const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
   const [dashboardStats, setDashboardStats] = useState(null);
+  const [inventoryStats, setInventoryStats] = useState(null);
+  
+  // Debug effect to track inventoryStats changes
+  useEffect(() => {
+    console.log('Inventory stats changed:', inventoryStats);
+  }, [inventoryStats]);
   const [todayBookings, setTodayBookings] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,6 +128,104 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         setDashboardStats(statsResponse.stats);
       }
 
+            // Fetch inventory data for analytics
+      try {
+        console.log('Fetching inventory data...');
+        // Get all inventory items for analytics
+        const allItemsResponse = await inventoryAPI.getInventoryItems({ size: 1000 });
+        const lowStockResponse = await inventoryAPI.getLowStockItems();
+        const outOfStockResponse = await inventoryAPI.getOutOfStockItems();
+        
+        console.log('Inventory API responses:', {
+          allItems: allItemsResponse,
+          lowStock: lowStockResponse,
+          outOfStock: outOfStockResponse
+        });
+        
+        // Check if APIs returned data (handle both success property and direct data)
+        const hasAllItems = allItemsResponse.success !== false && (allItemsResponse.items || allItemsResponse.content || allItemsResponse.data);
+        const hasLowStock = lowStockResponse.success !== false && (lowStockResponse.items || lowStockResponse.content || lowStockResponse.data);
+        const hasOutOfStock = outOfStockResponse.success !== false && (outOfStockResponse.items || outOfStockResponse.content || outOfStockResponse.data);
+        
+        if (hasAllItems && hasLowStock && hasOutOfStock) {
+          // Handle different possible response structures
+          const allItems = allItemsResponse.items || allItemsResponse.content || allItemsResponse.data || [];
+          const lowStockItems = lowStockResponse.items || lowStockResponse.content || lowStockResponse.data || [];
+          const outOfStockItems = outOfStockResponse.items || outOfStockResponse.content || outOfStockResponse.data || [];
+
+          // Calculate analytics data
+          const totalItems = allItems.length;
+          const inStockItems = totalItems - lowStockItems.length - outOfStockItems.length;
+          const lowStockCount = lowStockItems.length;
+          const outOfStockCount = outOfStockItems.length;
+
+          // Calculate total value
+          const totalValue = allItems.reduce((sum, item) => {
+            return sum + ((item.currentStock || 0) * (item.costPrice || 0));
+          }, 0);
+
+          // Group items by category for charts
+          const categoryMap = {};
+          const stockLevelsMap = {};
+
+          allItems.forEach(item => {
+            const category = item.category || 'Other';
+
+            // Category distribution
+            if (!categoryMap[category]) {
+              categoryMap[category] = 0;
+            }
+            categoryMap[category]++;
+
+            // Stock levels
+            if (!stockLevelsMap[category]) {
+              stockLevelsMap[category] = 0;
+            }
+            stockLevelsMap[category] += item.currentStock || 0;
+          });
+
+          // Convert to chart data format
+          const categoryDistribution = Object.entries(categoryMap).map(([name, value]) => ({
+            name,
+            value
+          }));
+
+          const stockLevels = Object.entries(stockLevelsMap).map(([category, quantity]) => ({
+            category,
+            quantity
+          }));
+
+          const inventoryAnalytics = {
+            totalItems,
+            inStockItems,
+            lowStockItems: lowStockCount,
+            outOfStockItems: outOfStockCount,
+            totalValue,
+            categoryDistribution,
+            stockLevels
+          };
+
+          console.log('Setting inventory stats:', inventoryAnalytics);
+          setInventoryStats(inventoryAnalytics);
+        } else {
+          console.log('One or more inventory API calls failed');
+          // Temporary fallback for testing - remove this in production
+          console.log('Using fallback inventory data for testing');
+          setInventoryStats({
+            totalItems: 0,
+            inStockItems: 0,
+            lowStockItems: 0,
+            outOfStockItems: 0,
+            totalValue: 0,
+            categoryDistribution: [],
+            stockLevels: []
+          });
+        }
+      } catch (inventoryErr) {
+        console.error('Error fetching inventory data:', inventoryErr);
+        // Don't set inventory stats if there's an error - section won't show
+      }
+
       // Fetch today's bookings
       const todayResponse = await vmServiceOverview.getTodayBookedServices();
       if (todayResponse.success) {
@@ -118,7 +239,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
       }
 
       // Show success message
-      toast.success('Dashboard Updated', 'Latest data has been loaded successfully.');
+      // toast.success('Dashboard Updated', 'Latest data has been loaded successfully.');
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data. Please try again.');
@@ -133,6 +254,8 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
       fetchDashboardData();
     }
   }, [activeMenu]);
+
+
 
   // Format date for display
   const formatDate = (dateString) => {
@@ -365,7 +488,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl p-5 shadow-md border border-purple-100 hover:shadow-lg hover:border-purple-200 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -377,7 +500,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl p-5 shadow-md border border-blue-100 hover:shadow-lg hover:border-blue-200 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -389,7 +512,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                 </div>
               </div>
             </div>
-            
+
             <div className="bg-white rounded-xl p-5 shadow-md border border-red-100 hover:shadow-lg hover:border-red-200 transition-all duration-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -440,9 +563,9 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                   <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Schedule is clear</h3>
                   <p className="text-gray-600 mb-2 text-base">No appointments scheduled for today.</p>
                   <p className="text-sm text-gray-500 mb-6">Perfect time to focus on other important tasks.</p>
-                  <Button 
-                    variant="outline" 
-                    size="default" 
+                  <Button
+                    variant="outline"
+                    size="default"
                     onClick={() => onMenuClick('bookings')}
                     className="border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 shadow-md hover:shadow-lg transition-all duration-200"
                   >
@@ -510,7 +633,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </div>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
-              <Button 
+              <Button
                 onClick={() => onMenuClick('bookings')}
                 className="w-full justify-start h-16 text-left bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl group"
               >
@@ -522,8 +645,8 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                   <div className="text-sm text-indigo-100">Schedule a service appointment</div>
                 </div>
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={() => onMenuClick('customers')}
                 className="w-full justify-start h-14 text-left bg-white hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50 text-gray-700 border border-gray-200 hover:border-blue-300 shadow-md hover:shadow-lg transition-all duration-300 rounded-xl group"
                 variant="outline"
@@ -536,8 +659,8 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                   <div className="text-xs text-gray-500">View and edit customer records</div>
                 </div>
               </Button>
-              
-              <Button 
+
+              <Button
                 onClick={() => onMenuClick('inventory')}
                 className="w-full justify-start h-14 text-left bg-white hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 text-gray-700 border border-gray-200 hover:border-purple-300 shadow-md hover:shadow-lg transition-all duration-300 rounded-xl group"
                 variant="outline"
@@ -555,6 +678,133 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         </div>
       </div>
 
+      {/* Inventory Analytics */}
+      {inventoryStats && (
+        <div className="space-y-6 max-w-7xl mx-auto">
+          <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 overflow-hidden">
+            <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-purple-50 via-white to-pink-50 px-6 py-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <Package className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-bold text-gray-900">Inventory Analytics</CardTitle>
+                    <CardDescription className="text-gray-600 mt-1 font-medium">
+                      Stock levels, categories, and value overview
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onMenuClick('inventory')}
+                  className="hidden sm:flex border-purple-200 text-purple-600 hover:bg-purple-50 hover:border-purple-300 shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  View Inventory
+                  <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Inventory Overview Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl p-4 border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-blue-600">Total Items</p>
+                        <p className="text-2xl font-bold text-blue-900">{inventoryStats?.totalItems || 0}</p>
+                      </div>
+                      <Package className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-emerald-50 to-green-100 rounded-xl p-4 border border-emerald-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-600">In Stock</p>
+                        <p className="text-2xl font-bold text-emerald-900">{inventoryStats?.inStockItems || 0}</p>
+                      </div>
+                      <CheckCircle className="h-8 w-8 text-emerald-600" />
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-amber-50 to-orange-100 rounded-xl p-4 border border-amber-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-amber-600">Low Stock</p>
+                        <p className="text-2xl font-bold text-amber-900">{inventoryStats?.lowStockItems || 0}</p>
+                      </div>
+                      <AlertTriangle className="h-8 w-8 text-amber-600" />
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-br from-red-50 to-pink-100 rounded-xl p-4 border border-red-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-semibold text-red-600">Out of Stock</p>
+                        <p className="text-2xl font-bold text-red-900">{inventoryStats?.outOfStockItems || 0}</p>
+                      </div>
+                      <XCircle className="h-8 w-8 text-red-600" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inventory Value Chart */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                    <DollarSign className="h-5 w-5 text-green-600" />
+                    Total Inventory Value
+                  </h4>
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    ₹{((inventoryStats?.totalValue || 0)).toLocaleString()}
+                  </div>
+                  <p className="text-sm text-gray-600">Current market value of all items</p>
+                </div>
+              </div>
+
+              {/* Charts Row */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                {/* Category Distribution Chart */}
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Category Distribution</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart>
+                      <Pie
+                        data={inventoryStats?.categoryDistribution || []}
+                        cx="50%"
+                        cy="50%"
+                        outerRadius={60}
+                        fill="#8884d8"
+                        dataKey="value"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      >
+                        {inventoryStats?.categoryDistribution?.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#8884d8', '#82ca9d', '#ffc658', '#ff7300', '#8dd1e1'][index % 5]} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Stock Level Chart */}
+                <div className="bg-white rounded-xl border border-gray-200 p-4">
+                  <h4 className="text-lg font-semibold text-gray-900 mb-4">Stock Levels</h4>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <BarChart data={inventoryStats?.stockLevels || []}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="category" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="quantity" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Recent Activity */}
       <Card className="border-0 shadow-xl bg-white hover:shadow-2xl transition-all duration-300 max-w-7xl mx-auto overflow-hidden">
         <CardHeader className="border-b border-gray-100 bg-gradient-to-r from-gray-50 via-white to-gray-50 px-6 py-6">
@@ -570,8 +820,8 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                 </CardDescription>
               </div>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => onMenuClick('bookings')}
               className="hidden sm:flex border-indigo-200 text-indigo-600 hover:bg-indigo-50 hover:border-indigo-300 shadow-md hover:shadow-lg transition-all duration-200"
@@ -655,7 +905,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
 
   // Keep only the essential, working render functions
   const renderInventory = () => (
-    <InventoryManagement />
+    <InventoryManagementRouter />
   );
 
   const renderUsers = () => <UserManagement />;

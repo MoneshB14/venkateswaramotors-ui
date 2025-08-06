@@ -249,6 +249,7 @@ export const GlobalProvider = ({ children }) => {
 
   const value = {
     // Toast functions
+    toast,
     showToast,
     showSuccess,
     showError,
