@@ -17,7 +17,9 @@ import {
   Tag,
   UserCheck,
   DollarSign,
-  FileText
+  FileText,
+  Building2,
+  Shield
 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { serviceTypes } from '../../config/menuConfig';
@@ -274,335 +276,362 @@ const BookingForm = ({ booking = null, onSave, onCancel }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-md mx-auto">
-        <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 py-6 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Compact Header - Top Left */}
+        <div className="text-left mb-6">
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">
+            {booking ? 'Edit Service Booking' : 'Schedule Service Appointment'}
+          </h1>
+          <p className="text-gray-600 text-sm">
+            {booking ? 'Update your service booking details' : 'Book your vehicle service with our expert technicians'}
+          </p>
+        </div>
+
+        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-t-lg py-4">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  {booking ? 'Edit Booking' : 'New Booking'}
+                <CardTitle className="text-xl font-bold">
+                  {booking ? 'Edit Booking Details' : 'Service Booking Form'}
                 </CardTitle>
-                <CardDescription className="text-gray-600 text-sm">
-                  {booking ? 'Update booking details' : 'Schedule your service'}
+                <CardDescription className="text-blue-100 text-sm">
+                  {booking ? 'Update your existing booking information' : 'Fill in the details below to schedule your service'}
                 </CardDescription>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={onCancel}
-                className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600"
+                className="h-8 w-8 p-0 text-blue-100 hover:text-white hover:bg-blue-600/20"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 pt-0">
+          <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Customer Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">
-                  Customer Information
-                </h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Full Name *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => handleInputChange('name', e.target.value)}
-                        className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${errors.name ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                        placeholder="Enter your name"
-                      />
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              {/* Main Form Grid - 2 Columns */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-6">
+                  {/* Customer Information */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg mr-3">
+                        <User className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900">Customer Information</h3>
                     </div>
-                    {errors.name && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.name}
-                      </p>
-                    )}
-                  </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Contact Number {!booking && '*'}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="tel"
-                        value={formData.contact}
-                        onChange={(e) => handleInputChange('contact', e.target.value)}
-                        className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${errors.contact ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                        placeholder={booking ? "Contact not available" : "Enter phone number"}
-                        maxLength="10"
-                        disabled={booking && !formData.contact}
-                      />
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    </div>
-                    {booking && !formData.contact && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Contact information not available in booking data
-                      </p>
-                    )}
-                    {errors.contact && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.contact}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Full Name <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 ${errors.name ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            placeholder="Enter your full name"
+                          />
+                          <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {errors.name && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.name}
+                          </p>
+                        )}
+                      </div>
 
-              <Separator />
-
-              {/* Vehicle Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">
-                  Vehicle Details
-                </h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Vehicle Model {!booking && '*'}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.vehicleModel}
-                        onChange={(e) => handleInputChange('vehicleModel', e.target.value)}
-                        className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${errors.vehicleModel ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                        placeholder={booking ? "Vehicle model not available" : "e.g., Honda Activa"}
-                        disabled={booking && !formData.vehicleModel}
-                      />
-                      <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    </div>
-                    {booking && !formData.vehicleModel && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Vehicle model information not available in booking data
-                      </p>
-                    )}
-                    {errors.vehicleModel && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.vehicleModel}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Registration Number *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.regNo}
-                        onChange={(e) => handleRegNoChange(e.target.value)}
-                        className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono ${errors.regNo ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                        placeholder="e.g., TN 20 DA 1818"
-                        maxLength="13"
-                      />
-                      <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    </div>
-                    {errors.regNo && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.regNo}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Service Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">
-                  Service Details
-                </h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Service Type *
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={formData.serviceType}
-                        onChange={(e) => handleInputChange('serviceType', e.target.value)}
-                        className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${errors.serviceType ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                      >
-                        <option value="">Select service type</option>
-                        {serviceTypes.map((service) => (
-                          <option key={service.id} value={service.name}>
-                            {service.name}
-                          </option>
-                        ))}
-                      </select>
-                      <Wrench className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                    </div>
-                    {errors.serviceType && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.serviceType}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Assigned Technician
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.assignedTechnician}
-                        onChange={(e) => handleInputChange('assignedTechnician', e.target.value)}
-                        className="w-full px-3 py-2 pl-9 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        placeholder="e.g., Rajesh Kumar"
-                      />
-                      <UserCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Contact Number {!booking && <span className="text-red-500">*</span>}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="tel"
+                            value={formData.contact}
+                            onChange={(e) => handleInputChange('contact', e.target.value)}
+                            className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 ${errors.contact ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            placeholder={booking ? "Contact not available" : "Enter 10-digit phone number"}
+                            maxLength="10"
+                            disabled={booking && !formData.contact}
+                          />
+                          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {booking && !formData.contact && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Contact information not available in booking data
+                          </p>
+                        )}
+                        {errors.contact && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.contact}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Estimated Cost
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={formData.estimatedCost}
-                        onChange={(e) => handleInputChange('estimatedCost', e.target.value)}
-                        className="w-full px-3 py-2 pl-9 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        placeholder="e.g., ₹1500"
-                      />
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  {/* Vehicle Information */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center justify-center w-8 h-8 bg-green-100 rounded-lg mr-3">
+                        <Car className="h-4 w-4 text-green-600" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900">Vehicle Details</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Vehicle Model {!booking && <span className="text-red-500">*</span>}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={formData.vehicleModel}
+                            onChange={(e) => handleInputChange('vehicleModel', e.target.value)}
+                            className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 ${errors.vehicleModel ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            placeholder={booking ? "Vehicle model not available" : "e.g., Honda Activa, Bajaj Pulsar"}
+                            disabled={booking && !formData.vehicleModel}
+                          />
+                          <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {booking && !formData.vehicleModel && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Vehicle model information not available in booking data
+                          </p>
+                        )}
+                        {errors.vehicleModel && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.vehicleModel}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Registration Number <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={formData.regNo}
+                            onChange={(e) => handleRegNoChange(e.target.value)}
+                            className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono transition-all duration-200 ${errors.regNo ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            placeholder="e.g., TN 20 DA 1818"
+                            maxLength="13"
+                          />
+                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {errors.regNo && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.regNo}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <Separator />
-
-              {/* Scheduling */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">
-                  Appointment
-                </h3>
-
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Date *
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="date"
-                        value={formData.preferredDate}
-                        onChange={(e) => handleInputChange('preferredDate', e.target.value)}
-                        className={`w-full px-3 py-2 pl-8 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${errors.preferredDate ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                        min={new Date().toISOString().split('T')[0]}
-                      />
-                      <Calendar className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                {/* Right Column */}
+                <div className="space-y-6">
+                  {/* Service Information */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center justify-center w-8 h-8 bg-orange-100 rounded-lg mr-3">
+                        <Wrench className="h-4 w-4 text-orange-600" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900">Service Details</h3>
                     </div>
-                    {errors.preferredDate && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.preferredDate}
-                      </p>
-                    )}
-                  </div>
 
-                  <div>
-                    <label className="text-sm font-medium text-gray-700 mb-1 block">
-                      Time *
-                    </label>
-                    <div className="relative">
-                      <select
-                        value={formData.preferredTime}
-                        onChange={(e) => handleInputChange('preferredTime', e.target.value)}
-                        className={`w-full px-3 py-2 pl-8 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm ${errors.preferredTime ? 'border-red-300' : 'border-gray-300'
-                          }`}
-                        disabled={loadingTimings}
-                      >
-                        <option value="">
-                          {loadingTimings ? 'Loading available times...' : 'Select time'}
-                        </option>
-                        {availableTimings.length > 0 ? (
-                          <>
-                            {/* Always include current time when editing */}
-                            {booking && formData.preferredTime && !availableTimings.includes(formData.preferredTime) && (
-                              <option value={formData.preferredTime}>
-                                {formData.preferredTime} (current)
-                              </option>
-                            )}
-                            {availableTimings.map((time) => (
-                              <option key={time} value={time}>
-                                {time}
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Service Type <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={formData.serviceType}
+                            onChange={(e) => handleInputChange('serviceType', e.target.value)}
+                            className={`w-full px-3 py-2 pl-9 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 ${errors.serviceType ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                          >
+                            <option value="">Select service type</option>
+                            {serviceTypes.map((service) => (
+                              <option key={service.id} value={service.name}>
+                                {service.name}
                               </option>
                             ))}
-                          </>
-                        ) : (
-                          <>
-                            <option value="09:00 AM">09:00 AM</option>
-                            <option value="10:00 AM">10:00 AM</option>
-                            <option value="11:00 AM">11:00 AM</option>
-                            <option value="12:00 PM">12:00 PM</option>
-                            <option value="01:00 PM">01:00 PM</option>
-                            <option value="02:00 PM">02:00 PM</option>
-                            <option value="03:00 PM">03:00 PM</option>
-                            <option value="04:00 PM">04:00 PM</option>
-                            <option value="05:00 PM">05:00 PM</option>
-                            <option value="06:00 PM">06:00 PM</option>
-                          </>
+                          </select>
+                          <Wrench className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {errors.serviceType && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.serviceType}
+                          </p>
                         )}
-                      </select>
-                      <Clock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                            Assigned Technician
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={formData.assignedTechnician}
+                              onChange={(e) => handleInputChange('assignedTechnician', e.target.value)}
+                              className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 hover:border-gray-400"
+                              placeholder="e.g., Rajesh Kumar"
+                            />
+                            <UserCheck className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                            Estimated Cost
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={formData.estimatedCost}
+                              onChange={(e) => handleInputChange('estimatedCost', e.target.value)}
+                              className="w-full px-3 py-2 pl-8 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 hover:border-gray-400"
+                              placeholder="e.g., ₹1500"
+                            />
+                            <DollarSign className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    {errors.preferredTime && (
-                      <p className="text-xs text-red-600 mt-1 flex items-center">
-                        <AlertCircle className="h-3 w-3 mr-1" />
-                        {errors.preferredTime}
-                      </p>
-                    )}
+                  </div>
+
+                  {/* Appointment Schedule */}
+                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <div className="flex items-center mb-4">
+                      <div className="flex items-center justify-center w-8 h-8 bg-purple-100 rounded-lg mr-3">
+                        <Calendar className="h-4 w-4 text-purple-600" />
+                      </div>
+                      <h3 className="text-sm font-semibold text-gray-900">Appointment Schedule</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Date <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="date"
+                            value={formData.preferredDate}
+                            onChange={(e) => handleInputChange('preferredDate', e.target.value)}
+                            className={`w-full px-3 py-2 pl-8 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 ${errors.preferredDate ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            min={new Date().toISOString().split('T')[0]}
+                          />
+                          <Calendar className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {errors.preferredDate && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.preferredDate}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                          Time <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={formData.preferredTime}
+                            onChange={(e) => handleInputChange('preferredTime', e.target.value)}
+                            className={`w-full px-3 py-2 pl-8 border rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 ${errors.preferredTime ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-gray-400'
+                              }`}
+                            disabled={loadingTimings}
+                          >
+                            <option value="">
+                              {loadingTimings ? 'Loading...' : 'Select time'}
+                            </option>
+                            {availableTimings.length > 0 ? (
+                              <>
+                                {booking && formData.preferredTime && !availableTimings.includes(formData.preferredTime) && (
+                                  <option value={formData.preferredTime}>
+                                    {formData.preferredTime} (current)
+                                  </option>
+                                )}
+                                {availableTimings.map((time) => (
+                                  <option key={time} value={time}>
+                                    {time}
+                                  </option>
+                                ))}
+                              </>
+                            ) : (
+                              <>
+                                <option value="09:00 AM">09:00 AM</option>
+                                <option value="10:00 AM">10:00 AM</option>
+                                <option value="11:00 AM">11:00 AM</option>
+                                <option value="12:00 PM">12:00 PM</option>
+                                <option value="01:00 PM">01:00 PM</option>
+                                <option value="02:00 PM">02:00 PM</option>
+                                <option value="03:00 PM">03:00 PM</option>
+                                <option value="04:00 PM">04:00 PM</option>
+                                <option value="05:00 PM">05:00 PM</option>
+                                <option value="06:00 PM">06:00 PM</option>
+                              </>
+                            )}
+                          </select>
+                          <Clock className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                        </div>
+                        {errors.preferredTime && (
+                          <p className="text-xs text-red-600 mt-1 flex items-center">
+                            <AlertCircle className="h-3 w-3 mr-1" />
+                            {errors.preferredTime}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <Separator />
-
-              {/* Additional Information */}
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-gray-900 border-b border-gray-200 pb-2">
-                  Additional Information
-                </h3>
+              {/* Additional Information - Full Width */}
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                <div className="flex items-center mb-4">
+                  <div className="flex items-center justify-center w-8 h-8 bg-indigo-100 rounded-lg mr-3">
+                    <FileText className="h-4 w-4 text-indigo-600" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-gray-900">Additional Information</h3>
+                </div>
 
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">
-                    Notes
+                  <label className="text-xs font-semibold text-gray-700 mb-1 block">
+                    Notes & Special Instructions
                   </label>
                   <div className="relative">
                     <textarea
                       value={formData.notes}
                       onChange={(e) => handleInputChange('notes', e.target.value)}
-                      className="w-full px-3 py-2 pl-9 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                      placeholder="Any additional notes or special instructions..."
+                      className="w-full px-3 py-2 pl-9 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200 hover:border-gray-400 resize-none"
+                      placeholder="Any additional notes, special instructions, or specific issues to address..."
                       rows="3"
                     />
                     <FileText className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
@@ -610,30 +639,44 @@ const BookingForm = ({ booking = null, onSave, onCancel }) => {
                 </div>
               </div>
 
+              {/* Security Notice - Compact */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-start">
+                  <Shield className="h-4 w-4 text-blue-600 mt-0.5 mr-2 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-xs font-semibold text-blue-900 mb-1">Secure Booking</h4>
+                    <p className="text-xs text-blue-700">
+                      Your information is secure and will only be used for service booking purposes.
+                      We respect your privacy and follow strict data protection guidelines.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               {/* Form Actions */}
-              <div className="flex space-x-3 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 text-sm py-2"
+                  className="flex-1 border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 text-sm py-2 px-4 font-medium transition-all duration-200"
                 >
-                  Cancel
+                  Cancel Booking
                 </Button>
                 <Button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm py-2"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-sm py-2 px-4 font-medium shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
+                      {booking ? 'Updating...' : 'Creating...'}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="h-4 w-4 mr-2" />
-                      {booking ? 'Update' : 'Create'}
+                      {booking ? 'Update Booking' : 'Schedule Appointment'}
                     </>
                   )}
                 </Button>

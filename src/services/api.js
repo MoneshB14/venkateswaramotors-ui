@@ -671,13 +671,29 @@ export const userManagementAPI = {
 
 // Bill Generation API
 export const billGenerationAPI = {
-  // Get all bills
+  // Save/Create bill
   saveBill: async (billData) => {
     const response = await api.post('/service-center/bookings/bills/save', billData);
     return response.data;
   },
 
+  // Get bill by booking ID
+  getBillByBookingId: async (bookingId) => {
+    const response = await api.get(`/service-center/bookings/bills/booking/${bookingId}`);
+    return response.data;
+  },
 
+  // Get bill by bill ID
+  getBillById: async (billId) => {
+    const response = await api.get(`/service-center/bookings/bills/${billId}`);
+    return response.data;
+  },
+
+  // Update bill
+  updateBill: async (billId, billData) => {
+    const response = await api.put(`/service-center/bookings/bills/${billId}`, billData);
+    return response.data;
+  }
 };
 
 export default api; 

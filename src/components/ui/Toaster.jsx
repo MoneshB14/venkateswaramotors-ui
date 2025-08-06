@@ -4,6 +4,8 @@ import SimpleToast from './SimpleToast';
 
 export const Toaster = () => {
   const { toasts, removeToast } = useToast();
+  
+  console.log('Toaster rendering with toasts:', toasts);
 
   return (
     <>

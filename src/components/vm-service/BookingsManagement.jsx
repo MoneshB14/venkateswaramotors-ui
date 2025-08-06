@@ -23,10 +23,11 @@ import {
   ChevronDown,
   ChevronUp,
   MoreHorizontal,
-  FileText
+  FileText,
+  Receipt
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
-import { bookingsAPI } from '../../services/api';
+import { bookingsAPI, billGenerationAPI } from '../../services/api';
 import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
 import { useToast } from '../../hooks/useToast';
 import BookingForm from './BookingForm';
@@ -44,6 +45,9 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showBillModal, setShowBillModal] = useState(false);
   const [billBooking, setBillBooking] = useState(null);
+  const [existingBill, setExistingBill] = useState(null);
+  const [billMode, setBillMode] = useState('create'); // 'create' or 'edit'
+  const [loadingBill, setLoadingBill] = useState(false);
   const [filters, setFilters] = useState({
     status: initialFilters?.status || '',
     serviceType: initialFilters?.serviceType || '',
@@ -307,10 +311,16 @@ const BookingsManagement = ({ initialFilters = null }) => {
       itemName: 'booking',
       onConfirm: async () => {
         try {
-          await bookingsAPI.deleteBooking(bookingId);
-          fetchBookings(); // Refresh the list
+          const response = await bookingsAPI.deleteBooking(bookingId);
+          if (response && response.success !== false) {
+            toast.success('Booking Deleted', 'Booking has been deleted successfully.');
+            fetchBookings(); // Refresh the list
+          } else {
+            toast.error('Delete Failed', response?.message || 'Failed to delete booking. Please try again.');
+          }
         } catch (error) {
           console.error('Error deleting booking:', error);
+          toast.error(' Delete Error', 'Unable to delete booking. Please check your connection and try again.');
         }
       }
     });
@@ -326,14 +336,14 @@ const BookingsManagement = ({ initialFilters = null }) => {
       });
 
       if (response.success) {
-        toast.success('Status Updated', 'Booking status has been updated successfully.');
+        toast.success('Status Updated', `Booking status changed to ${newStatus.replace('_', ' ')}.`);
         fetchBookings(); // Refresh the list
       } else {
-        toast.error('Error', response.message || 'Failed to update status.');
+        toast.error('Update Failed', response.message || 'Failed to update status. Please try again.');
       }
     } catch (error) {
       console.error('Error updating booking status:', error);
-      toast.error('Error', 'Failed to update status. Please try again.');
+      toast.error('Network Error', 'Unable to update status. Please check your connection and try again.');
     } finally {
       setUpdatingStatus(prev => ({ ...prev, [bookingId]: false }));
     }
@@ -477,20 +487,123 @@ const BookingsManagement = ({ initialFilters = null }) => {
   };
 
   // Handle generate bill
-  const handleGenerateBill = (booking) => {
-    setBillBooking(booking);
-    setShowBillModal(true);
+  const handleGenerateBill = async (booking) => {
+    try {
+      setBillBooking(booking);
+
+      // Check if bill already exists
+      if (booking.billGenerated) {
+        // Bill exists - fetch it for editing
+        setBillMode('edit');
+        setLoadingBill(true);
+        setExistingBill(null); // Clear previous data
+        setShowBillModal(true); // Show modal immediately with loader
+
+        try {
+          console.log('Fetching existing bill for booking:', booking.bookingId);
+          const response = await billGenerationAPI.getBillByBookingId(booking.bookingId);
+          console.log('Raw API response:', response);
+          console.log('Response type:', typeof response);
+          console.log('Is response array?', Array.isArray(response));
+
+          let billData = null;
+
+          // Handle different response formats
+          if (Array.isArray(response) && response.length > 0) {
+            // Response itself is an array (direct from API)
+            billData = response[0];
+            console.log('Response is array, extracted first item:', billData);
+          } else if (response && response.success && Array.isArray(response.bill) && response.bill.length > 0) {
+            // Standard API response with bill array
+            billData = response.bill[0];
+            console.log('Extracted bill from response.bill array:', billData);
+          } else if (response && response.success && response.bill && !Array.isArray(response.bill)) {
+            // Standard API response with single bill object
+            billData = response.bill;
+            console.log('Using response.bill directly:', billData);
+          } else if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+            // Response has data property with array
+            billData = response.data[0];
+            console.log('Extracted from response.data array:', billData);
+          } else if (response && !response.success) {
+            console.log('API returned error:', response.message);
+            toast.error('Error', response.message || 'Failed to load existing bill.');
+            setExistingBill(null);
+            setLoadingBill(false);
+            return;
+          } else {
+            console.log('Unexpected response format:', response);
+          }
+
+          if (billData) {
+            console.log('Setting existing bill data:', billData);
+            setExistingBill(billData);
+            toast.success('Bill Found', 'Existing bill loaded for editing.');
+          } else {
+            toast.error('Error', 'Failed to load existing bill.');
+            setExistingBill(null);
+          }
+        } catch (error) {
+          console.error('Error fetching existing bill:', error);
+          toast.error('Error', 'Failed to load existing bill.');
+          setExistingBill(null);
+        } finally {
+          setLoadingBill(false);
+        }
+      } else {
+        // No bill exists - create new
+        setBillMode('create');
+        setExistingBill(null);
+        setLoadingBill(false);
+        setShowBillModal(true);
+        toast.info('New Bill', 'Creating a new bill for this booking.');
+      }
+    } catch (error) {
+      console.error('Error handling bill generation:', error);
+      toast.error('Error', 'Failed to handle bill generation.');
+      setLoadingBill(false);
+    }
   };
 
   // Handle bill save
   const handleBillSave = async (billInfo) => {
     try {
-      // Here you would typically save to your API
-      console.log('Saving bill:', billInfo);
-      // You can add API call here to save the bill
-      // await billAPI.saveBill(billInfo);
+      let response;
+
+      if (billMode === 'edit' && existingBill) {
+        // Update existing bill
+        console.log('Updating existing bill:', billInfo);
+        response = await billGenerationAPI.updateBill(existingBill.id, billInfo);
+        if (response.success) {
+          toast.success('✅ Bill Updated Successfully', `Bill ${response.billNumber || existingBill.billNumber} has been updated.`);
+          // Refresh bookings to update billGenerated status
+          fetchBookings();
+          return response; // Return success response
+        } else {
+          toast.error('❌ Update Failed', response.message || 'Failed to update bill. Please try again.');
+          throw new Error(response.message || 'Failed to update bill');
+        }
+      } else {
+        // Create new bill
+        console.log('Creating new bill:', billInfo);
+        response = await billGenerationAPI.saveBill(billInfo);
+        if (response.success) {
+          toast.success('✅ Bill Created Successfully', `Bill ${response.billNumber} has been generated and saved.`);
+          // Refresh bookings to update billGenerated status
+          fetchBookings();
+          return response; // Return success response
+        } else {
+          toast.error('❌ Creation Failed', response.message || 'Failed to create bill. Please try again.');
+          throw new Error(response.message || 'Failed to create bill');
+        }
+      }
+
     } catch (error) {
       console.error('Error saving bill:', error);
+      // Show generic error toast if not already shown
+      if (!error.message?.includes('Failed to')) {
+        toast.error('❌ Network Error', 'Unable to save bill. Please check your connection and try again.');
+      }
       throw error; // Re-throw so the modal can handle it
     }
   };
@@ -499,6 +612,9 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const handleBillModalClose = () => {
     setShowBillModal(false);
     setBillBooking(null);
+    setExistingBill(null);
+    setBillMode('create');
+    setLoadingBill(false);
   };
 
   if (showBookingForm) {
@@ -832,7 +948,14 @@ const BookingsManagement = ({ initialFilters = null }) => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {bookings.map((booking) => (
-                      <tr key={booking.bookingId} className="hover:bg-gray-50 transition-colors">
+                      <tr 
+                        key={booking.bookingId} 
+                        className={`transition-colors ${
+                          booking.billGenerated 
+                            ? 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                      >
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-3">
                             <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
@@ -937,23 +1060,32 @@ const BookingsManagement = ({ initialFilters = null }) => {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditBooking(booking)}
-                              className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
-                              title="Edit Booking"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            {!booking.billGenerated && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleEditBooking(booking)}
+                                className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                                title="Edit Booking"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleGenerateBill(booking)}
-                              className="h-8 w-8 p-0 border-green-300 text-green-700 hover:bg-green-50"
-                              title="Generate Bill"
+                              className={`h-8 w-8 p-0 ${booking.billGenerated
+                                  ? "border-blue-300 text-blue-700 hover:bg-blue-50"
+                                  : "border-green-300 text-green-700 hover:bg-green-50"
+                                }`}
+                              title={booking.billGenerated ? "Edit Bill" : "Generate Bill"}
                             >
-                              <FileText className="h-4 w-4" />
+                              {booking.billGenerated ? (
+                                <Receipt className="h-4 w-4" />
+                              ) : (
+                                <FileText className="h-4 w-4" />
+                              )}
                             </Button>
                             <Button
                               variant="outline"
@@ -990,6 +1122,9 @@ const BookingsManagement = ({ initialFilters = null }) => {
       <BillGenerationModal
         isOpen={showBillModal}
         booking={billBooking}
+        existingBill={existingBill}
+        mode={billMode}
+        loadingBill={loadingBill}
         onClose={handleBillModalClose}
         onSave={handleBillSave}
       />

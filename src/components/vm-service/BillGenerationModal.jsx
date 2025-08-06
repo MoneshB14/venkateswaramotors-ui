@@ -17,14 +17,24 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { serviceTypes } from '../../config/menuConfig';
-import { billGenerationAPI } from '../../services/api';
 
 const BillGenerationModal = ({
     isOpen,
     booking,
+    existingBill = null,
+    mode = 'create', // 'create' or 'edit'
+    loadingBill = false,
     onClose,
     onSave
 }) => {
+    // Debug: Log all props when component renders
+    console.log('BillGenerationModal props:', {
+        isOpen,
+        booking,
+        existingBill,
+        mode,
+        loadingBill
+    });
     const [billData, setBillData] = useState({
         serviceCharges: 0,
         laborCharges: 0,
@@ -91,27 +101,76 @@ const BillGenerationModal = ({
 
     const { toast } = useToast();
 
-    // Initialize bill data when booking changes
+    // Debug: Log current billData state
     useEffect(() => {
+        console.log('Current billData state:', billData);
+    }, [billData]);
+
+    // Initialize bill data when booking or existing bill changes
+    useEffect(() => {
+        console.log('BillModal useEffect triggered:', {
+            booking: !!booking,
+            mode,
+            existingBill: !!existingBill,
+            loadingBill,
+            existingBillData: existingBill
+        });
+
         if (booking) {
-            setBillData({
-                serviceCharges: parseFloat(booking.estimatedCost?.replace(/[^\d.]/g, '') || 0),
-                laborCharges: 0,
-                additionalCharges: 0,
-                discount: 0,
-                taxRate: 18,
-                notes: '',
-                paymentStatus: 'PENDING',
-                // Additional services
-                waterWash: false,
-                waterWashCharges: 200,
-                // Parts and consumables
-                parts: [],
-                // Service details
-                workDescription: `${getServiceTypeName(booking.serviceType)} service performed`
-            });
+            if (mode === 'edit' && existingBill && !loadingBill) {
+                // Load existing bill data for editing (only when not loading)
+                console.log('Loading existing bill data into form:', existingBill);
+                console.log('Existing bill serviceCharges:', existingBill.serviceCharges);
+                console.log('Existing bill parts:', existingBill.parts);
+
+                const newBillData = {
+                    serviceCharges: existingBill.serviceCharges || 0,
+                    laborCharges: existingBill.laborCharges || 0,
+                    additionalCharges: existingBill.additionalCharges || 0,
+                    discount: existingBill.discount || 0,
+                    taxRate: existingBill.taxRate || 18,
+                    notes: existingBill.notes || '',
+                    paymentStatus: existingBill.paymentStatus || 'PENDING',
+                    // Additional services
+                    waterWash: existingBill.waterWash || false,
+                    waterWashCharges: existingBill.waterWashCharges || 200,
+                    // Parts and consumables
+                    parts: existingBill.parts || [],
+                    // Service details
+                    workDescription: existingBill.workDescription || `${getServiceTypeName(booking.serviceType)} service performed`
+                };
+
+                console.log('Setting bill data to:', newBillData);
+                setBillData(newBillData);
+            } else if (mode === 'create') {
+                console.log('Creating new bill data for booking:', booking.bookingId);
+                // Initialize new bill data
+                setBillData({
+                    serviceCharges: parseFloat(booking.estimatedCost?.replace(/[^\d.]/g, '') || 0),
+                    laborCharges: 0,
+                    additionalCharges: 0,
+                    discount: 0,
+                    taxRate: 18,
+                    notes: '',
+                    paymentStatus: 'PENDING',
+                    // Additional services
+                    waterWash: false,
+                    waterWashCharges: 200,
+                    // Parts and consumables
+                    parts: [],
+                    // Service details
+                    workDescription: `${getServiceTypeName(booking.serviceType)} service performed`
+                });
+            } else {
+                console.log('Conditions not met for bill data initialization:', {
+                    mode,
+                    hasExistingBill: !!existingBill,
+                    loadingBill
+                });
+            }
+            // If loadingBill is true, don't update billData yet - wait for existingBill
         }
-    }, [booking]);
+    }, [booking, existingBill, mode, loadingBill]);
 
     // Calculate bill totals
     const calculateBillTotals = () => {
@@ -140,7 +199,19 @@ const BillGenerationModal = ({
     const handleBillDataChange = (field, value) => {
         setBillData(prev => ({
             ...prev,
-            [field]: field === 'notes' || field === 'paymentStatus' ? value : (parseFloat(value) || 0)
+            [field]: field === 'notes' || field === 'paymentStatus' ? value : (value === '' ? 0 : parseFloat(value) || 0)
+        }));
+    };
+
+    // Handle number input changes with proper formatting
+    const handleNumberInputChange = (field, value) => {
+        // Remove leading zeros and non-numeric characters except decimal point
+        const cleanValue = value.replace(/^0+/, '') || '0';
+        const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
+
+        setBillData(prev => ({
+            ...prev,
+            [field]: numericValue
         }));
     };
 
@@ -190,51 +261,14 @@ const BillGenerationModal = ({
                 parts: billData.parts || []
             };
 
-                         console.log('Sending bill data to API:', billPayload);
-             console.log('Making API call to: /service-center/bookings/bills/save');
+            console.log('Sending bill data to parent handler:', billPayload);
 
-             // Make API call to save bill using the API service
-             const result = await billGenerationAPI.saveBill(billPayload);
-
-             console.log('API Response received:', result);
-
-             if (result.success) {
-                 toast.success('Bill Saved Successfully', `Bill ${result.billNumber} has been generated and saved.`);
-
-                 // Call parent save handler with the saved bill data
-                 await onSave(result.bill);
-                 onClose();
-             } else {
-                 // Handle API error response
-                 const errorMessage = result.message || 'Failed to save bill. Please try again.';
-                 toast.error('Error Saving Bill', errorMessage);
-                 console.error('API Error:', result);
-             }
+            // Let parent handle the API call to avoid duplicate calls
+            await onSave(billPayload);
+            onClose();
         } catch (error) {
-            console.error('Error saving bill - Full error object:', error);
-            console.error('Error message:', error.message);
-            console.error('Error response:', error.response);
-            console.error('Error config:', error.config);
-
-            // Handle network or other errors
-            let errorMessage = 'Failed to save bill. Please check your connection and try again.';
-
-            if (error.response) {
-                // The request was made and the server responded with a status code
-                // that falls out of the range of 2xx
-                console.error('Server responded with error:', error.response.status, error.response.data);
-                errorMessage = `Server error (${error.response.status}): ${error.response.data?.message || 'Unknown error'}`;
-            } else if (error.request) {
-                // The request was made but no response was received
-                console.error('No response received:', error.request);
-                errorMessage = 'No response from server. Please check if the server is running.';
-            } else {
-                // Something happened in setting up the request that triggered an Error
-                console.error('Request setup error:', error.message);
-                errorMessage = `Request error: ${error.message}`;
-            }
-
-            toast.error('Error', errorMessage);
+            console.error('Error preparing bill data:', error);
+            toast.error('Error', error.message || 'Failed to save bill. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -300,12 +334,27 @@ const BillGenerationModal = ({
                     {/* Modal Header */}
                     <div className="flex items-center justify-between p-4 border-b border-gray-200 print:hidden">
                         <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                <FileText className="h-4 w-4 text-green-600" />
+                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${mode === 'edit'
+                                    ? 'bg-blue-100'
+                                    : 'bg-green-100'
+                                }`}>
+                                <FileText className={`h-4 w-4 ${mode === 'edit'
+                                        ? 'text-blue-600'
+                                        : 'text-green-600'
+                                    }`} />
                             </div>
                             <div>
-                                <h3 className="text-lg font-semibold text-gray-900">Generate Bill</h3>
-                                <p className="text-xs text-gray-500">Booking ID: {booking.bookingId}</p>
+                                <h3 className="text-lg font-semibold text-gray-900">
+                                    {mode === 'edit' ? 'Edit Bill' : 'Generate Bill'}
+                                </h3>
+                                <p className="text-xs text-gray-500">
+                                    Booking ID: {booking.bookingId}
+                                    {mode === 'edit' && existingBill && (
+                                        <span className="ml-2 text-blue-600">
+                                            • Bill #{existingBill.billNumber}
+                                        </span>
+                                    )}
+                                </p>
                             </div>
                         </div>
                         <Button
@@ -319,7 +368,16 @@ const BillGenerationModal = ({
                     </div>
 
                     {/* Bill Content */}
-                    <div className="p-4 space-y-4">
+                    <div className="relative p-4 space-y-4">
+                        {/* Loading Overlay */}
+                        {loadingBill && (
+                            <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
+                                <div className="text-center">
+                                    <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-2" />
+                                    <p className="text-sm text-gray-600">Loading existing bill data...</p>
+                                </div>
+                            </div>
+                        )}
                         {/* Company Header */}
                         <div className="border-b-2 border-blue-200 pb-4">
                             <div className="text-center mb-3">
@@ -455,8 +513,12 @@ const BillGenerationModal = ({
                                             <div className="col-span-2">
                                                 <input
                                                     type="number"
-                                                    value={part.quantity}
-                                                    onChange={(e) => updatePart(part.id, 'quantity', parseFloat(e.target.value) || 0)}
+                                                    value={part.quantity || ''}
+                                                    onChange={(e) => {
+                                                        const cleanValue = e.target.value.replace(/^0+/, '') || '0';
+                                                        const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
+                                                        updatePart(part.id, 'quantity', numericValue);
+                                                    }}
                                                     className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                     min="0"
                                                     step="1"
@@ -465,8 +527,12 @@ const BillGenerationModal = ({
                                             <div className="col-span-2">
                                                 <input
                                                     type="number"
-                                                    value={part.unitPrice}
-                                                    onChange={(e) => updatePart(part.id, 'unitPrice', parseFloat(e.target.value) || 0)}
+                                                    value={part.unitPrice || ''}
+                                                    onChange={(e) => {
+                                                        const cleanValue = e.target.value.replace(/^0+/, '') || '0';
+                                                        const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
+                                                        updatePart(part.id, 'unitPrice', numericValue);
+                                                    }}
                                                     className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                     min="0"
                                                     step="0.01"
@@ -510,8 +576,8 @@ const BillGenerationModal = ({
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Service Charges (₹)</label>
                                         <input
                                             type="number"
-                                            value={billData.serviceCharges}
-                                            onChange={(e) => handleBillDataChange('serviceCharges', e.target.value)}
+                                            value={billData.serviceCharges || ''}
+                                            onChange={(e) => handleNumberInputChange('serviceCharges', e.target.value)}
                                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                             min="0"
                                             step="0.01"
@@ -521,8 +587,8 @@ const BillGenerationModal = ({
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Labor Charges (₹)</label>
                                         <input
                                             type="number"
-                                            value={billData.laborCharges}
-                                            onChange={(e) => handleBillDataChange('laborCharges', e.target.value)}
+                                            value={billData.laborCharges || ''}
+                                            onChange={(e) => handleNumberInputChange('laborCharges', e.target.value)}
                                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                             min="0"
                                             step="0.01"
@@ -532,8 +598,8 @@ const BillGenerationModal = ({
                                         <label className="block text-xs font-medium text-gray-700 mb-1">Additional Charges (₹)</label>
                                         <input
                                             type="number"
-                                            value={billData.additionalCharges}
-                                            onChange={(e) => handleBillDataChange('additionalCharges', e.target.value)}
+                                            value={billData.additionalCharges || ''}
+                                            onChange={(e) => handleNumberInputChange('additionalCharges', e.target.value)}
                                             className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                             min="0"
                                             step="0.01"
@@ -563,8 +629,8 @@ const BillGenerationModal = ({
                                             <span className="text-xs">₹</span>
                                             <input
                                                 type="number"
-                                                value={billData.waterWashCharges}
-                                                onChange={(e) => setBillData(prev => ({ ...prev, waterWashCharges: parseFloat(e.target.value) || 0 }))}
+                                                value={billData.waterWashCharges || ''}
+                                                onChange={(e) => handleNumberInputChange('waterWashCharges', e.target.value)}
                                                 className="w-16 px-1 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                 min="0"
                                                 step="1"
@@ -577,8 +643,8 @@ const BillGenerationModal = ({
                                             <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
                                             <input
                                                 type="number"
-                                                value={billData.discount}
-                                                onChange={(e) => handleBillDataChange('discount', e.target.value)}
+                                                value={billData.discount || ''}
+                                                onChange={(e) => handleNumberInputChange('discount', e.target.value)}
                                                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                 min="0"
                                                 max="100"
@@ -589,8 +655,8 @@ const BillGenerationModal = ({
                                             <label className="block text-xs font-medium text-gray-700 mb-1">GST Rate (%)</label>
                                             <input
                                                 type="number"
-                                                value={billData.taxRate}
-                                                onChange={(e) => handleBillDataChange('taxRate', e.target.value)}
+                                                value={billData.taxRate || ''}
+                                                onChange={(e) => handleNumberInputChange('taxRate', e.target.value)}
                                                 className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
                                                 min="0"
                                                 max="100"
@@ -837,18 +903,21 @@ const BillGenerationModal = ({
                         <Button
                             size="sm"
                             onClick={handleBillSave}
-                            disabled={isSaving}
-                            className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                            disabled={isSaving || loadingBill}
+                            className={`text-white disabled:opacity-50 disabled:cursor-not-allowed ${mode === 'edit'
+                                    ? 'bg-blue-600 hover:bg-blue-700'
+                                    : 'bg-green-600 hover:bg-green-700'
+                                }`}
                         >
                             {isSaving ? (
                                 <>
                                     <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                    Saving...
+                                    {mode === 'edit' ? 'Updating...' : 'Saving...'}
                                 </>
                             ) : (
                                 <>
                                     <Save className="h-3 w-3 mr-1" />
-                                    Save Bill
+                                    {mode === 'edit' ? 'Update Bill' : 'Save Bill'}
                                 </>
                             )}
                         </Button>
