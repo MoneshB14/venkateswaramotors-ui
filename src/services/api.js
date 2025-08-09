@@ -251,10 +251,31 @@ export const bookingsAPI = {
 
 // Customers Management API
 export const customersAPI = {
-  // Get all customers with filters
+  // Legacy - Get all customers with filters (may be ignored by backend)
   getCustomers: async (filters = {}) => {
     const response = await api.get('/service-center/customers', { params: filters });
     return response.data;
+  },
+
+  // List customers with pagination and optional search
+  getCustomerList: async (page = 0, size = 10, search = '') => {
+    const response = await api.get('/service-center/customers', {
+      params: {
+        page,
+        size,
+        ...(search ? { search } : {}),
+        _t: Date.now()
+      }
+    });
+    return response.data; // Expected to match CustomerListResponse
+  },
+
+  // Get full customer history by vehicle registration (request param)
+  getCustomerHistory: async (registration) => {
+    const response = await api.get('/service-center/customers/history', {
+      params: { registration }
+    });
+    return response.data; // Expected to match CustomerHistoryResponse
   },
 
   // Get customer by ID

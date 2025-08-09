@@ -24,16 +24,23 @@ import {
   X
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
-import { customersAPI, vehiclesAPI, bookingsAPI } from '../../services/api';
+import { customersAPI } from '../../services/api';
+import CustomerHistoryModal from './CustomerHistoryModal';
+import { useToast } from '../../hooks/useToast';
 
 const CustomersManagement = () => {
+  const { toast } = useToast();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showCustomerForm, setShowCustomerForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [historyReg, setHistoryReg] = useState(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+  const [total, setTotal] = useState(0);
   const [filters, setFilters] = useState({
     search: '',
     hasVehicles: '',
@@ -52,23 +59,19 @@ const CustomersManagement = () => {
     notes: ''
   });
 
-  // Fetch customers
+  // Fetch customers (paginated list API)
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       setError(null);
-
-      const response = await customersAPI.getCustomers(filters);
-
-      if (response.success) {
-        setCustomers(response.customers || []);
-      } else {
-        setError(response.message || 'Failed to fetch customers');
-      }
+      const response = await customersAPI.getCustomerList(page, size, filters.search || '');
+      // Expected CustomerListResponse
+      const list = response.customers || response.data || response.content || [];
+      setCustomers(list);
+      setTotal(response.total ?? list.length ?? 0);
     } catch (err) {
       console.error('Error fetching customers:', err);
       setError('Failed to load customers. Please try again.');
-      toast.error('Error', 'Failed to load customers. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -77,7 +80,7 @@ const CustomersManagement = () => {
   // Load customers on component mount and when filters change
   useEffect(() => {
     fetchCustomers();
-  }, [filters]);
+  }, [filters, page, size]);
 
   // Handle filter changes
   const handleFilterChange = (field, value) => {
@@ -184,10 +187,12 @@ const CustomersManagement = () => {
     setShowCustomerForm(true);
   };
 
-  // Open customer details modal
+  // Open customer history modal by registration
   const handleViewCustomer = (customer) => {
+    const registration = customer.vehicleRegistration || customer.vehicleRegNo || customer.registration || customer.vehicle_registration || customer.vehicleNumber;
     setSelectedCustomer(customer);
-    setShowDetailsModal(true);
+    setHistoryReg(registration || '');
+    setShowHistory(true);
   };
 
   // Handle form input changes
@@ -206,6 +211,19 @@ const CustomersManagement = () => {
       lastVisit: customer.lastVisit || 'Never',
       totalSpent: customer.totalSpent || 0
     };
+  };
+
+  // Format last visit
+  const formatDateTime = (iso) => {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleString('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   if (showCustomerForm) {
@@ -486,7 +504,7 @@ const CustomersManagement = () => {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-lg font-semibold text-gray-900">
-                  All Customers ({customers.length})
+                  All Customers ({total})
                 </CardTitle>
                 <CardDescription className="text-gray-600">
                   View and manage customer information
@@ -521,192 +539,90 @@ const CustomersManagement = () => {
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Customer Info
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Contact Details
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Statistics
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Last Visit
-                      </th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Actions
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visits / Service</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Visit</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Booking</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {customers.map((customer) => {
-                      const stats = getCustomerStats(customer);
-                      return (
-                        <tr key={customer.id} className="hover:bg-gray-50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                <User className="h-5 w-5 text-green-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">
-                                  {customer.name}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  Customer ID: {customer.id}
-                                </p>
-                                {customer.address && (
-                                  <p className="text-xs text-gray-400 truncate max-w-xs">
-                                    <MapPin className="h-3 w-3 inline mr-1" />
-                                    {customer.address}
-                                  </p>
-                                )}
-                              </div>
+                    {customers.map((c) => (
+                      <tr key={c.vehicleRegistration} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                              <User className="h-5 w-5 text-green-600" />
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm space-y-1">
-                              <p className="text-gray-900 flex items-center">
-                                <Phone className="h-3 w-3 mr-2" />
-                                {customer.phone}
-                              </p>
-                              {customer.email && (
-                                <p className="text-gray-500 flex items-center">
-                                  <Mail className="h-3 w-3 mr-2" />
-                                  {customer.email}
-                                </p>
-                              )}
-                              {customer.emergencyContact && (
-                                <p className="text-gray-500 flex items-center">
-                                  <AlertCircle className="h-3 w-3 mr-2" />
-                                  {customer.emergencyContact}
-                                </p>
-                              )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">{c.customerName || '—'}</p>
+                              <p className="text-xs text-gray-500 font-mono">{c.vehicleRegistration}</p>
                             </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm space-y-1">
-                              <p className="text-gray-900">
-                                <Car className="h-3 w-3 inline mr-1" />
-                                {stats.totalVehicles} vehicles
-                              </p>
-                              <p className="text-gray-500">
-                                <Calendar className="h-3 w-3 inline mr-1" />
-                                {stats.totalBookings} bookings
-                              </p>
-                              <p className="text-gray-500">
-                                <span className="font-medium">₹{stats.totalSpent}</span> total spent
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="text-sm">
-                              <p className="text-gray-900">
-                                {stats.lastVisit}
-                              </p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewCustomer(customer)}
-                                className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleEditCustomer(customer)}
-                                className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteCustomer(customer.id)}
-                                className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 flex items-center">
+                            <Phone className="h-3 w-3 mr-2" />
+                            {c.contactNumber || '—'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm space-y-1">
+                            <p className="text-gray-900"><Calendar className="h-3 w-3 inline mr-1" />{c.totalVisits ?? 0} visits</p>
+                            <p className="text-gray-500">{c.lastServiceType || '—'}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{formatDateTime(c.lastVisit)}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900">{c.lastBookingId || '—'}</td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewCustomer(c)}
+                              className="h-8 w-8 p-0 border-gray-300 text-gray-700 hover:bg-gray-50"
+                              title="View History"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+            {customers.length > 0 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center space-x-2 text-sm">
+                  <span>Show</span>
+                  <select
+                    value={size}
+                    onChange={(e) => { setSize(Number(e.target.value)); setPage(0); }}
+                    className="px-2 py-1 border border-gray-300 rounded"
+                  >
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                  <span>of {total}</span>
+                </div>
+                <div className="text-sm text-gray-700">
+                  Showing {Math.min(page * size + 1, total)} to {Math.min((page + 1) * size, total)} of {total}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(Math.max(0, page - 1))}>Prev</Button>
+                  <Button variant="outline" size="sm" disabled={(page + 1) * size >= total} onClick={() => setPage(page + 1)}>Next</Button>
+                </div>
               </div>
             )}
           </CardContent>
         </Card>
       )}
 
-      {/* Customer Details Modal */}
-      {selectedCustomer && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Customer Details</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDetailsModal(false)}
-                className="border-gray-300 text-gray-700 hover:bg-gray-50"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Name</label>
-                  <p className="text-gray-900">{selectedCustomer.name}</p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Phone</label>
-                  <p className="text-gray-900">{selectedCustomer.phone}</p>
-                </div>
-                {selectedCustomer.email && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Email</label>
-                    <p className="text-gray-900">{selectedCustomer.email}</p>
-                  </div>
-                )}
-                {selectedCustomer.emergencyContact && (
-                  <div>
-                    <label className="text-sm font-medium text-gray-700">Emergency Contact</label>
-                    <p className="text-gray-900">{selectedCustomer.emergencyContact}</p>
-                  </div>
-                )}
-                {selectedCustomer.address && (
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700">Address</label>
-                    <p className="text-gray-900">{selectedCustomer.address}</p>
-                  </div>
-                )}
-                {selectedCustomer.notes && (
-                  <div className="md:col-span-2">
-                    <label className="text-sm font-medium text-gray-700">Notes</label>
-                    <p className="text-gray-900">{selectedCustomer.notes}</p>
-                  </div>
-                )}
-              </div>
-              
-              <Separator />
-              
-              <div>
-                <h4 className="text-md font-semibold text-gray-900 mb-2">Service History</h4>
-                <p className="text-gray-500 text-sm">Service history will be displayed here.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <CustomerHistoryModal isOpen={showHistory} registration={historyReg} onClose={() => setShowHistory(false)} />
     </div>
   );
 };

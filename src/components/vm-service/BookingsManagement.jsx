@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
@@ -50,6 +50,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const [existingBill, setExistingBill] = useState(null);
   const [billMode, setBillMode] = useState('create'); // 'create' or 'edit'
   const [loadingBill, setLoadingBill] = useState(false);
+  const isFetchingBillRef = useRef(false);
   const [filters, setFilters] = useState({
     status: initialFilters?.status || '',
     serviceType: initialFilters?.serviceType || '',
@@ -491,6 +492,8 @@ const BookingsManagement = ({ initialFilters = null }) => {
   // Handle generate bill
   const handleGenerateBill = async (booking) => {
     try {
+      if (isFetchingBillRef.current) return; // prevent duplicate clicks while fetching
+      isFetchingBillRef.current = true;
       setBillBooking(booking);
 
       // Check if bill already exists
@@ -499,7 +502,6 @@ const BookingsManagement = ({ initialFilters = null }) => {
         setBillMode('edit');
         setLoadingBill(true);
         setExistingBill(null); // Clear previous data
-        setShowBillModal(true); // Show modal immediately with loader
 
         try {
           console.log('Fetching existing bill for booking:', booking.bookingId);
@@ -540,7 +542,6 @@ const BookingsManagement = ({ initialFilters = null }) => {
           if (billData) {
             console.log('Setting existing bill data:', billData);
             setExistingBill(billData);
-            toast.success('Bill Found', 'Existing bill loaded for editing.');
           } else {
             toast.error('Error', 'Failed to load existing bill.');
             setExistingBill(null);
@@ -551,6 +552,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
           setExistingBill(null);
         } finally {
           setLoadingBill(false);
+          setShowBillModal(true); // Open after data load to avoid extra UI-driven calls
         }
       } else {
         // No bill exists - create new
@@ -558,12 +560,14 @@ const BookingsManagement = ({ initialFilters = null }) => {
         setExistingBill(null);
         setLoadingBill(false);
         setShowBillModal(true);
-        toast.info('New Bill', 'Creating a new bill for this booking.');
       }
     } catch (error) {
       console.error('Error handling bill generation:', error);
       toast.error('Error', 'Failed to handle bill generation.');
       setLoadingBill(false);
+    }
+    finally {
+      isFetchingBillRef.current = false;
     }
   };
 
