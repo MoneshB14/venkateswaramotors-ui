@@ -68,6 +68,23 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const { confirmDelete } = useGlobal();
   const { toast } = useToast();
 
+  // Update filters when initialFilters prop changes
+  useEffect(() => {
+    if (initialFilters) {
+      setFilters({
+        status: initialFilters.status || '',
+        serviceType: initialFilters.serviceType || '',
+        dateFrom: initialFilters.dateFrom || '',
+        dateTo: initialFilters.dateTo || '',
+        search: initialFilters.search || ''
+      });
+      // Also show filters panel if filters are applied
+      if (Object.values(initialFilters).some(filter => filter && filter !== '')) {
+        setShowFilters(true);
+      }
+    }
+  }, [initialFilters]);
+
   // Helper function to validate date range
   const isValidDateRange = (fromDate, toDate) => {
     if (!fromDate || !toDate) return false;
@@ -957,8 +974,8 @@ const BookingsManagement = ({ initialFilters = null }) => {
                       <tr
                         key={booking.bookingId}
                         className={`transition-colors ${booking.billGenerated
-                            ? 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500'
-                            : 'hover:bg-gray-50'
+                          ? 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500'
+                          : 'hover:bg-gray-50'
                           }`}
                       >
                         <td className="px-6 py-4">
@@ -1193,8 +1210,8 @@ const BookingsManagement = ({ initialFilters = null }) => {
                             size="sm"
                             onClick={() => setCurrentPage(i)}
                             className={`h-8 w-8 p-0 ${currentPage === i
-                                ? "bg-blue-600 text-white border-blue-600"
-                                : "border-gray-300 text-gray-700 hover:bg-gray-50"
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "border-gray-300 text-gray-700 hover:bg-gray-50"
                               }`}
                           >
                             {i + 1}

@@ -46,7 +46,7 @@ import {
 const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
   const [dashboardStats, setDashboardStats] = useState(null);
   const [inventoryStats, setInventoryStats] = useState(null);
-  
+
   // Debug effect to track inventoryStats changes
   useEffect(() => {
     console.log('Inventory stats changed:', inventoryStats);
@@ -128,25 +128,25 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         setDashboardStats(statsResponse.stats);
       }
 
-            // Fetch inventory data for analytics
+      // Fetch inventory data for analytics
       try {
         console.log('Fetching inventory data...');
         // Get all inventory items for analytics
         const allItemsResponse = await inventoryAPI.getInventoryItems({ size: 1000 });
         const lowStockResponse = await inventoryAPI.getLowStockItems();
         const outOfStockResponse = await inventoryAPI.getOutOfStockItems();
-        
+
         console.log('Inventory API responses:', {
           allItems: allItemsResponse,
           lowStock: lowStockResponse,
           outOfStock: outOfStockResponse
         });
-        
+
         // Check if APIs returned data (handle both success property and direct data)
         const hasAllItems = allItemsResponse.success !== false && (allItemsResponse.items || allItemsResponse.content || allItemsResponse.data);
         const hasLowStock = lowStockResponse.success !== false && (lowStockResponse.items || lowStockResponse.content || lowStockResponse.data);
         const hasOutOfStock = outOfStockResponse.success !== false && (outOfStockResponse.items || outOfStockResponse.content || outOfStockResponse.data);
-        
+
         if (hasAllItems && hasLowStock && hasOutOfStock) {
           // Handle different possible response structures
           const allItems = allItemsResponse.items || allItemsResponse.content || allItemsResponse.data || [];
@@ -419,7 +419,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="group cursor-pointer border border-amber-200 shadow-lg bg-white hover:shadow-xl hover:border-amber-300 hover:bg-gradient-to-br hover:from-white hover:to-amber-50 transition-all duration-300 overflow-hidden" onClick={() => handleCardClick('pendingServices')} title="Click to view pending bookings">
+            <Card className="border border-amber-200 shadow-lg bg-white hover:shadow-xl hover:border-amber-300 transition-all duration-300 overflow-hidden">
               <CardHeader className="pb-3 px-6 pt-6 bg-gradient-to-r from-amber-50 to-orange-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -431,7 +431,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                       <p className="text-sm text-amber-600 font-semibold">In queue</p>
                     </div>
                   </div>
-                  <ArrowUpRight className="h-5 w-5 text-amber-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
                 </div>
               </CardHeader>
               <CardContent className="px-6 pb-6 bg-white">
@@ -446,7 +446,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
               </CardContent>
             </Card>
 
-            <Card className="group cursor-pointer border border-emerald-200 shadow-lg bg-white hover:shadow-xl hover:border-emerald-300 hover:bg-gradient-to-br hover:from-white hover:to-emerald-50 transition-all duration-300 overflow-hidden" onClick={() => handleCardClick('completedServices')} title="Click to view completed bookings">
+            <Card className="border border-emerald-200 shadow-lg bg-white hover:shadow-xl hover:border-emerald-300 transition-all duration-300 overflow-hidden">
               <CardHeader className="pb-3 px-6 pt-6 bg-gradient-to-r from-emerald-50 to-green-50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -458,7 +458,7 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                       <p className="text-sm text-emerald-600 font-semibold">This month</p>
                     </div>
                   </div>
-                  <ArrowUpRight className="h-5 w-5 text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
                 </div>
               </CardHeader>
               <CardContent className="px-6 pb-6 bg-white">
