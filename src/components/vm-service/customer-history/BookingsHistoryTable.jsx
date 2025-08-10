@@ -1,32 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { DataTable } from '../../ui/data-table';
 import { Badge } from '../../ui/badge';
-import { Button } from '../../ui/button';
 import {
   Calendar,
-  Clock,
-  User,
-  Eye,
-  FileText,
-  Phone,
-  MapPin
+  Clock
 } from 'lucide-react';
 import { formatDate, formatDateTime, getStatusBadgeVariant } from '../../../utils/customerUtils';
 
-const BookingsHistoryTable = ({ bookings = [], onViewDetails, onGenerateBill }) => {
-  const [selectedBooking, setSelectedBooking] = useState(null);
+const BookingsHistoryTable = ({ bookings = [] }) => {
 
   const columns = [
     {
       key: 'bookingId',
       header: 'Booking ID',
-      render: (value, row) => (
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-900">{value}</div>
-          <div className="text-xs text-gray-500">
-            Created: {formatDateTime(row.createdAt)}
-          </div>
-        </div>
+      render: (value) => (
+        <div className="font-semibold text-gray-900">{value}</div>
       )
     },
     {
@@ -41,7 +29,7 @@ const BookingsHistoryTable = ({ bookings = [], onViewDetails, onGenerateBill }) 
     },
     {
       key: 'preferredDate',
-      header: 'Scheduled',
+      header: 'Schedule',
       render: (value, row) => (
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm">
@@ -63,68 +51,6 @@ const BookingsHistoryTable = ({ bookings = [], onViewDetails, onGenerateBill }) 
           {value || 'Unknown'}
         </Badge>
       )
-    },
-    {
-      key: 'assignedTechnician',
-      header: 'Technician',
-      render: (value) => (
-        <div className="flex items-center gap-2">
-          <User className="h-3.5 w-3.5 text-gray-500" />
-          <span className="text-sm">{value || 'Not assigned'}</span>
-        </div>
-      )
-    },
-    {
-      key: 'contactNumber',
-      header: 'Contact',
-      render: (value, row) => (
-        <div className="space-y-1">
-          {value && (
-            <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-3.5 w-3.5 text-gray-500" />
-              <span>{value}</span>
-            </div>
-          )}
-          {row.address && (
-            <div className="flex items-center gap-2 text-xs text-gray-600">
-              <MapPin className="h-3 w-3 text-gray-500" />
-              <span className="truncate max-w-32">{row.address}</span>
-            </div>
-          )}
-        </div>
-      )
-    },
-    {
-      key: 'actions',
-      header: 'Actions',
-      render: (_, row) => (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails?.(row);
-            }}
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </Button>
-          {row.bookingStatus?.toLowerCase() === 'completed' && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-7 p-0"
-              onClick={(e) => {
-                e.stopPropagation();
-                onGenerateBill?.(row);
-              }}
-            >
-              <FileText className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
-      )
     }
   ];
 
@@ -141,18 +67,16 @@ const BookingsHistoryTable = ({ bookings = [], onViewDetails, onGenerateBill }) 
         sortable={true}
         pagination={true}
         pageSize={10}
-        onRowClick={(row) => setSelectedBooking(row)}
+
         onExport={(data) => {
           const csv = [
-            ['Booking ID', 'Service Type', 'Date', 'Time', 'Status', 'Technician', 'Contact'],
+            ['Booking ID', 'Service Type', 'Date', 'Time', 'Status'],
             ...data.map(booking => [
               booking.bookingId || '',
               booking.serviceType || '',
               formatDate(booking.preferredDate),
               booking.preferredTime || '',
-              booking.bookingStatus || '',
-              booking.assignedTechnician || '',
-              booking.contactNumber || ''
+              booking.bookingStatus || ''
             ])
           ].map(row => row.join(',')).join('\n');
           

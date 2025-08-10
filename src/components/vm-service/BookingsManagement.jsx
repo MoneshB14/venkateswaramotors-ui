@@ -586,7 +586,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
           fetchBookings();
           return response; // Return success response
         } else {
-          toast.error('❌ Update Failed', response.message || 'Failed to update bill. Please try again.');
+          toast.error(response.message || 'Failed to update bill. Please try again.');
           throw new Error(response.message || 'Failed to update bill');
         }
       } else {
@@ -594,12 +594,12 @@ const BookingsManagement = ({ initialFilters = null }) => {
         console.log('Creating new bill:', billInfo);
         response = await billGenerationAPI.saveBill(billInfo);
         if (response.success) {
-          toast.success('✅ Bill Created Successfully', `Bill ${response.billNumber} has been generated and saved.`);
+          toast.success(`Bill ${response.billNumber} has been generated and saved.`);
           // Refresh bookings to update billGenerated status
           fetchBookings();
           return response; // Return success response
         } else {
-          toast.error('❌ Creation Failed', response.message || 'Failed to create bill. Please try again.');
+          toast.error(response.message || 'Failed to create bill. Please try again.');
           throw new Error(response.message || 'Failed to create bill');
         }
       }
@@ -608,7 +608,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
       console.error('Error saving bill:', error);
       // Show generic error toast if not already shown
       if (!error.message?.includes('Failed to')) {
-        toast.error('❌ Network Error', 'Unable to save bill. Please check your connection and try again.');
+        toast.error('Network Error', 'Unable to save bill. Please check your connection and try again.');
       }
       throw error; // Re-throw so the modal can handle it
     }
@@ -954,13 +954,12 @@ const BookingsManagement = ({ initialFilters = null }) => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {bookings.map((booking) => (
-                      <tr 
-                        key={booking.bookingId} 
-                        className={`transition-colors ${
-                          booking.billGenerated 
-                            ? 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500' 
+                      <tr
+                        key={booking.bookingId}
+                        className={`transition-colors ${booking.billGenerated
+                            ? 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500'
                             : 'hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center space-x-3">
@@ -1082,8 +1081,8 @@ const BookingsManagement = ({ initialFilters = null }) => {
                               size="sm"
                               onClick={() => handleGenerateBill(booking)}
                               className={`h-8 w-8 p-0 ${booking.billGenerated
-                                  ? "border-blue-300 text-blue-700 hover:bg-blue-50"
-                                  : "border-green-300 text-green-700 hover:bg-green-50"
+                                ? "border-blue-300 text-blue-700 hover:bg-blue-50"
+                                : "border-green-300 text-green-700 hover:bg-green-50"
                                 }`}
                               title={booking.billGenerated ? "Edit Bill" : "Generate Bill"}
                             >
@@ -1132,7 +1131,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
                     </select>
                     <span className="text-sm text-gray-700">entries</span>
                   </div>
-                  
+
                   <div className="text-sm text-gray-700">
                     Showing {Math.min(currentPage * pageSize + 1, totalBookings)} to {Math.min((currentPage + 1) * pageSize, totalBookings)} of {totalBookings} bookings
                   </div>
@@ -1164,7 +1163,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
                       }
 
                       const pages = [];
-                      
+
                       // First page
                       if (startPage > 0) {
                         pages.push(
@@ -1193,11 +1192,10 @@ const BookingsManagement = ({ initialFilters = null }) => {
                             variant={currentPage === i ? "default" : "outline"}
                             size="sm"
                             onClick={() => setCurrentPage(i)}
-                            className={`h-8 w-8 p-0 ${
-                              currentPage === i 
-                                ? "bg-blue-600 text-white border-blue-600" 
+                            className={`h-8 w-8 p-0 ${currentPage === i
+                                ? "bg-blue-600 text-white border-blue-600"
                                 : "border-gray-300 text-gray-700 hover:bg-gray-50"
-                            }`}
+                              }`}
                           >
                             {i + 1}
                           </Button>

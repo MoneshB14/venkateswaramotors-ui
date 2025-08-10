@@ -21,8 +21,8 @@ const BillsHistoryTable = ({ bills = [], onViewBill, onDownloadBill, onMarkPaid 
       key: 'billNumber',
       header: 'Bill Details',
       render: (value, row) => (
-        <div className="space-y-1">
-          <div className="font-semibold text-gray-900">{value}</div>
+        <div className="space-y-1 min-w-0">
+          <div className="font-semibold text-gray-900 truncate">{value}</div>
           <div className="text-xs text-gray-500">
             Booking: {row.bookingId}
           </div>
@@ -34,23 +34,19 @@ const BillsHistoryTable = ({ bills = [], onViewBill, onDownloadBill, onMarkPaid 
     },
     {
       key: 'subtotal',
-      header: 'Amount Breakdown',
+      header: 'Subtotal',
+      align: 'right',
       render: (value, row) => (
-        <div className="space-y-1 text-sm">
-          <div className="flex justify-between">
-            <span className="text-gray-600">Subtotal:</span>
-            <span className="font-medium">{formatCurrency(value)}</span>
-          </div>
+        <div className="text-right">
+          <div className="text-sm font-medium text-gray-900">{formatCurrency(value)}</div>
           {row.discountAmount > 0 && (
-            <div className="flex justify-between text-emerald-600">
-              <span>Discount ({row.discount}%):</span>
-              <span>-{formatCurrency(row.discountAmount)}</span>
+            <div className="text-xs text-emerald-600">
+              -{formatCurrency(row.discountAmount)} ({row.discount}%)
             </div>
           )}
           {row.taxAmount > 0 && (
-            <div className="flex justify-between text-gray-600">
-              <span>Tax ({row.taxRate}%):</span>
-              <span>+{formatCurrency(row.taxAmount)}</span>
+            <div className="text-xs text-gray-500">
+              +{formatCurrency(row.taxAmount)} tax
             </div>
           )}
         </div>
@@ -59,6 +55,7 @@ const BillsHistoryTable = ({ bills = [], onViewBill, onDownloadBill, onMarkPaid 
     {
       key: 'total',
       header: 'Total Amount',
+      align: 'right',
       render: (value, row) => (
         <div className="text-right">
           <div className="text-lg font-bold text-gray-900">
@@ -80,14 +77,12 @@ const BillsHistoryTable = ({ bills = [], onViewBill, onDownloadBill, onMarkPaid 
         const isOverdue = status !== 'paid' && new Date(row.billDate) < new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         
         return (
-          <div className="space-y-2">
-            <Badge variant={isOverdue ? 'error' : getStatusBadgeVariant(value)}>
-              <div className="flex items-center gap-1">
-                {status === 'paid' && <CheckCircle className="h-3 w-3" />}
-                {status === 'pending' && <Clock className="h-3 w-3" />}
-                {isOverdue && <AlertCircle className="h-3 w-3" />}
-                {isOverdue ? 'Overdue' : (value || 'Unknown')}
-              </div>
+          <div className="space-y-1">
+            <Badge variant={isOverdue ? 'error' : getStatusBadgeVariant(value)} className="inline-flex items-center gap-1">
+              {status === 'paid' && <CheckCircle className="h-3 w-3" />}
+              {status === 'pending' && <Clock className="h-3 w-3" />}
+              {isOverdue && <AlertCircle className="h-3 w-3" />}
+              {isOverdue ? 'Overdue' : (value || 'Unknown')}
             </Badge>
             {row.paymentDate && (
               <div className="text-xs text-gray-500">
@@ -101,41 +96,45 @@ const BillsHistoryTable = ({ bills = [], onViewBill, onDownloadBill, onMarkPaid 
     {
       key: 'actions',
       header: 'Actions',
+      align: 'right',
       render: (_, row) => (
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-end gap-1">
           <Button
             variant="outline"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-8 w-8 p-0"
             onClick={(e) => {
               e.stopPropagation();
               onViewBill?.(row);
             }}
+            title="View bill"
           >
-            <Eye className="h-3.5 w-3.5" />
+            <Eye className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-8 w-8 p-0"
             onClick={(e) => {
               e.stopPropagation();
               onDownloadBill?.(row);
             }}
+            title="Download bill"
           >
-            <Download className="h-3.5 w-3.5" />
+            <Download className="h-4 w-4" />
           </Button>
           {row.paymentStatus?.toLowerCase() !== 'paid' && (
             <Button
               variant="outline"
               size="sm"
-              className="h-7 w-7 p-0"
+              className="h-8 w-8 p-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onMarkPaid?.(row);
               }}
+              title="Mark as paid"
             >
-              <CreditCard className="h-3.5 w-3.5" />
+              <CreditCard className="h-4 w-4" />
             </Button>
           )}
         </div>
@@ -157,39 +156,69 @@ const BillsHistoryTable = ({ bills = [], onViewBill, onDownloadBill, onMarkPaid 
     <div className="space-y-4">
       {/* Summary Cards */}
       {bills.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Receipt className="h-5 w-5 text-blue-600" />
-              <span className="text-sm font-medium text-blue-700">Total Billed</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
+                  <Receipt className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-blue-900">Total Billed</span>
+                  <div className="text-xs text-blue-700">{bills.length} bills</div>
+                </div>
+              </div>
             </div>
             <div className="text-2xl font-bold text-blue-900">{formatCurrency(totalAmount)}</div>
-            <div className="text-xs text-blue-600">{bills.length} bills</div>
           </div>
           
-          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="h-5 w-5 text-emerald-600" />
-              <span className="text-sm font-medium text-emerald-700">Amount Paid</span>
+          <div className="bg-gradient-to-br from-emerald-50 to-green-100 border border-emerald-200 rounded-xl p-5 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-emerald-900">Amount Paid</span>
+                  <div className="text-xs text-emerald-700">
+                    {bills.filter(b => b.paymentStatus?.toLowerCase() === 'paid').length} paid bills
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="text-2xl font-bold text-emerald-900">{formatCurrency(paidAmount)}</div>
-            <div className="text-xs text-emerald-600">
-              {bills.filter(b => b.paymentStatus?.toLowerCase() === 'paid').length} paid bills
-            </div>
           </div>
           
-          <div className={`${pendingAmount > 0 ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className={`h-5 w-5 ${pendingAmount > 0 ? 'text-amber-600' : 'text-gray-600'}`} />
-              <span className={`text-sm font-medium ${pendingAmount > 0 ? 'text-amber-700' : 'text-gray-700'}`}>
-                Pending Amount
-              </span>
+          <div className={`rounded-xl p-5 shadow-sm border ${
+            pendingAmount > 0 
+              ? 'bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200' 
+              : 'bg-gradient-to-br from-gray-50 to-slate-100 border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                  pendingAmount > 0 ? 'bg-amber-500' : 'bg-gray-500'
+                }`}>
+                  <Clock className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <span className={`text-sm font-semibold ${
+                    pendingAmount > 0 ? 'text-amber-900' : 'text-gray-900'
+                  }`}>
+                    Pending Amount
+                  </span>
+                  <div className={`text-xs ${
+                    pendingAmount > 0 ? 'text-amber-700' : 'text-gray-700'
+                  }`}>
+                    {bills.filter(b => b.paymentStatus?.toLowerCase() !== 'paid').length} pending bills
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className={`text-2xl font-bold ${pendingAmount > 0 ? 'text-amber-900' : 'text-gray-900'}`}>
+            <div className={`text-2xl font-bold ${
+              pendingAmount > 0 ? 'text-amber-900' : 'text-gray-900'
+            }`}>
               {formatCurrency(pendingAmount)}
-            </div>
-            <div className={`text-xs ${pendingAmount > 0 ? 'text-amber-600' : 'text-gray-600'}`}>
-              {bills.filter(b => b.paymentStatus?.toLowerCase() !== 'paid').length} pending bills
             </div>
           </div>
         </div>

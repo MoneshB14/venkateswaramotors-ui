@@ -23,12 +23,12 @@ import { useCustomerHistory } from '../../../hooks/useCustomerHistory';
 import { useToast } from '../../../hooks/useToast';
 import { exportToCSV, searchInCustomerData } from '../../../utils/customerUtils';
 
-const EnhancedCustomerHistoryModal = ({ 
-  isOpen, 
-  registration, 
-  onClose, 
-  shouldFetch = true, 
-  prefetchedData = null, 
+const EnhancedCustomerHistoryModal = ({
+  isOpen,
+  registration,
+  onClose,
+  shouldFetch = true,
+  prefetchedData = null,
   externalLoading = false,
   onViewBookingDetails,
   onGenerateBill,
@@ -42,7 +42,7 @@ const EnhancedCustomerHistoryModal = ({
   const [showReminderDialog, setShowReminderDialog] = useState(false);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState({});
-  
+
   const {
     data,
     loading,
@@ -59,7 +59,7 @@ const EnhancedCustomerHistoryModal = ({
 
   const handleExport = useCallback(() => {
     if (!data) return;
-    
+
     try {
       exportToCSV(data, `customer_history_${registration}_${new Date().toISOString().split('T')[0]}`);
       toast.success('Export successful', 'Customer history exported successfully');
@@ -135,93 +135,93 @@ const EnhancedCustomerHistoryModal = ({
   if (!isOpen) return null;
 
   const isLoading = loading || externalLoading;
-  
+
   // Apply filters to data
   const filteredData = data ? (() => {
     let filtered = { ...data };
-    
+
     // Apply date filters
     if (appliedFilters.dateRange?.start || appliedFilters.dateRange?.end) {
       const startDate = appliedFilters.dateRange.start ? new Date(appliedFilters.dateRange.start) : new Date(0);
       const endDate = appliedFilters.dateRange.end ? new Date(appliedFilters.dateRange.end) : new Date();
-      
+
       filtered.bookings = filtered.bookings?.filter(booking => {
         const bookingDate = new Date(booking.createdAt || booking.preferredDate);
         return bookingDate >= startDate && bookingDate <= endDate;
       });
-      
+
       filtered.bills = filtered.bills?.filter(bill => {
         const billDate = new Date(bill.billDate);
         return billDate >= startDate && billDate <= endDate;
       });
     }
-    
+
     // Apply amount filters
     if (appliedFilters.amountRange?.min || appliedFilters.amountRange?.max) {
       const minAmount = appliedFilters.amountRange.min ? Number(appliedFilters.amountRange.min) : 0;
       const maxAmount = appliedFilters.amountRange.max ? Number(appliedFilters.amountRange.max) : Infinity;
-      
+
       filtered.bills = filtered.bills?.filter(bill => {
         const amount = Number(bill.total) || 0;
         return amount >= minAmount && amount <= maxAmount;
       });
     }
-    
+
     // Apply service type filters
     if (appliedFilters.serviceTypes?.length > 0) {
       filtered.bookings = filtered.bookings?.filter(booking =>
         appliedFilters.serviceTypes.includes(booking.serviceType)
       );
     }
-    
+
     // Apply booking status filters
     if (appliedFilters.bookingStatuses?.length > 0) {
       filtered.bookings = filtered.bookings?.filter(booking =>
         appliedFilters.bookingStatuses.includes(booking.bookingStatus)
       );
     }
-    
+
     // Apply payment status filters
     if (appliedFilters.paymentStatuses?.length > 0) {
       filtered.bills = filtered.bills?.filter(bill =>
         appliedFilters.paymentStatuses.includes(bill.paymentStatus)
       );
     }
-    
+
     // Apply technician filters
     if (appliedFilters.technicians?.length > 0) {
       filtered.bookings = filtered.bookings?.filter(booking =>
         appliedFilters.technicians.includes(booking.assignedTechnician)
       );
     }
-    
+
     return filtered;
   })() : null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden border border-gray-200">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
+      <div className="bg-white rounded-lg sm:rounded-2xl shadow-2xl max-w-7xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-hidden border border-gray-200 flex flex-col">
         {/* Header */}
-                        <CustomerHistoryHeader
-                  data={data}
-                  registration={registration}
-                  onClose={onClose}
-                  onRefresh={refresh}
-                  onExport={handleExport}
-                  onSetReminder={handleShowReminderDialog}
-                  onShowFilters={() => setShowAdvancedFilters(true)}
-                  loading={isLoading}
-                  lastFetched={lastFetched}
-                  hasActiveFilters={Object.keys(appliedFilters).some(key => 
-                    appliedFilters[key] && 
-                    (Array.isArray(appliedFilters[key]) ? appliedFilters[key].length > 0 : 
-                     typeof appliedFilters[key] === 'object' ? Object.values(appliedFilters[key]).some(v => v) :
-                     appliedFilters[key])
-                  )}
-                />
+        <CustomerHistoryHeader
+          data={data}
+          registration={registration}
+          onClose={onClose}
+          onRefresh={refresh}
+          onExport={handleExport}
+          onSetReminder={handleShowReminderDialog}
+          onShowFilters={() => setShowAdvancedFilters(true)}
+          loading={isLoading}
+          lastFetched={lastFetched}
+          hasActiveFilters={Object.keys(appliedFilters).some(key =>
+            appliedFilters[key] &&
+            (Array.isArray(appliedFilters[key]) ? appliedFilters[key].length > 0 :
+              typeof appliedFilters[key] === 'object' ? Object.values(appliedFilters[key]).some(v => v) :
+                appliedFilters[key])
+          )}
+        />
 
         {/* Content */}
-        <div className="flex flex-col h-[calc(95vh-200px)]">
+        <div className="flex flex-col flex-1 min-h-0">
           {/* Error State */}
           {error && !isLoading && (
             <div className="p-6">
@@ -233,17 +233,17 @@ const EnhancedCustomerHistoryModal = ({
                       <h3 className="text-lg font-semibold text-red-900 mb-2">Error Loading Customer History</h3>
                       <p className="text-sm text-red-700 mb-4">{error}</p>
                       <div className="flex gap-3">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={refresh}
                           className="border-red-300 text-red-700 hover:bg-red-100"
                         >
                           Try Again
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={clearCache}
                           className="border-red-300 text-red-700 hover:bg-red-100"
                         >
@@ -270,56 +270,83 @@ const EnhancedCustomerHistoryModal = ({
 
           {/* Main Content */}
           {!isLoading && !error && data && (
-            <div className="flex-1 overflow-hidden">
-              <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col">
-                {/* Tab Navigation */}
-                <div className="border-b border-gray-200 px-6 py-4 bg-gray-50">
-                  <TabsList className="grid w-full grid-cols-3 max-w-md">
-                    <TabsTrigger value="overview" className="flex items-center gap-2">
-                      <BarChart3 className="h-4 w-4" />
-                      <span className="hidden sm:inline">Overview</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="bookings" className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span className="hidden sm:inline">Bookings</span>
-                      <span className="ml-1 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full">
-                        {data.bookings?.length || 0}
-                      </span>
-                    </TabsTrigger>
-                    <TabsTrigger value="bills" className="flex items-center gap-2">
-                      <Receipt className="h-4 w-4" />
-                      <span className="hidden sm:inline">Bills</span>
-                      <span className="ml-1 text-xs bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded-full">
-                        {data.bills?.length || 0}
-                      </span>
-                    </TabsTrigger>
-                  </TabsList>
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Modern Tab Navigation */}
+              <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-3 flex-shrink-0">
+                <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 overflow-x-auto">
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${activeTab === 'overview'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    aria-label="View overview tab"
+                  >
+                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="font-semibold text-sm sm:text-base">Overview</span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('bookings')}
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${activeTab === 'bookings'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    aria-label="View bookings tab"
+                  >
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="font-semibold text-sm sm:text-base">Bookings</span>
+                    <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
+                      {data.bookings?.length || 0}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab('bills')}
+                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${activeTab === 'bills'
+                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    aria-label="View bills tab"
+                  >
+                    <Receipt className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="font-semibold text-sm sm:text-base">Bills</span>
+                    <span className="ml-1 text-xs bg-emerald-100 text-emerald-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
+                      {data.bills?.length || 0}
+                    </span>
+                  </button>
                 </div>
+              </div>
 
-                {/* Tab Content */}
-                <div className="flex-1 overflow-y-auto">
-                  <TabsContent value="overview" className="p-6 space-y-6">
-                    <CustomerStatsOverview data={filteredData || data} />
-                  </TabsContent>
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto bg-gray-50">
+                {activeTab === 'overview' && (
+                  <div className="p-3 sm:p-6">
+                    <div className="space-y-4 sm:space-y-6">
+                      <CustomerStatsOverview data={filteredData || data} />
+                    </div>
+                  </div>
+                )}
 
-                  <TabsContent value="bookings" className="p-6">
+                {activeTab === 'bookings' && (
+                  <div className="p-3 sm:p-6">
                     <BookingsHistoryTable
                       bookings={filteredData?.bookings || data?.bookings || []}
-                      onViewDetails={handleViewBookingDetails}
-                      onGenerateBill={handleGenerateBill}
                     />
-                  </TabsContent>
+                  </div>
+                )}
 
-                  <TabsContent value="bills" className="p-6">
+                {activeTab === 'bills' && (
+                  <div className="p-3 sm:p-6">
                     <BillsHistoryTable
                       bills={filteredData?.bills || data?.bills || []}
                       onViewBill={handleViewBill}
                       onDownloadBill={handleDownloadBill}
                       onMarkPaid={handleMarkPaid}
                     />
-                  </TabsContent>
-                </div>
-              </Tabs>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

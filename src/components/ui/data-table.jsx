@@ -24,7 +24,6 @@ const DataTable = ({
   pageSize = 10,
   className,
   onRowClick,
-  onExport,
   loading = false,
   emptyMessage = "No data available"
 }) => {
@@ -75,45 +74,26 @@ const DataTable = ({
     }));
   };
 
-  const handleExport = () => {
-    if (onExport) {
-      onExport(processedData);
-    } else {
-      // Default CSV export
-      const csv = [
-        columns.map(col => col.header).join(','),
-        ...processedData.map(row => 
-          columns.map(col => row[col.key] || '').join(',')
-        )
-      ].join('\n');
-      
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'export.csv';
-      a.click();
-      window.URL.revokeObjectURL(url);
-    }
-  };
+
 
   return (
     <div className={cn("space-y-4", className)}>
       {/* Table Controls */}
-      {(searchable || filterable || onExport) && (
-        <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center">
-          <div className="flex flex-col sm:flex-row gap-2 flex-1">
+      {(searchable || filterable) && (
+        <div className="mb-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             {searchable && (
-              <div className="relative flex-1 max-w-sm">
+              <div className="relative w-full sm:w-80">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 w-full"
                 />
               </div>
             )}
+            
             {filterable && (
               <Button variant="outline" size="sm" className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
@@ -121,37 +101,36 @@ const DataTable = ({
               </Button>
             )}
           </div>
-          
-          {onExport && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleExport}
-              className="flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          )}
         </div>
       )}
 
       {/* Table */}
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full table-fixed">
             <thead className="bg-gray-50">
               <tr>
-                {columns.map((column) => (
+                {columns.map((column, index) => (
                   <th
                     key={column.key}
                     className={cn(
-                      "px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider",
-                      sortable && "cursor-pointer hover:bg-gray-100 select-none"
+                      "px-4 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider",
+                      // Apply column-specific alignment
+                      column.align === 'right' ? "text-right" : column.align === 'center' ? "text-center" : "text-left",
+                      sortable && "cursor-pointer hover:bg-gray-100 select-none",
+                      // Dynamic column widths for better alignment
+                      index === 0 && "w-2/5", // Bill Details - wider
+                      index === 1 && "w-1/6", // Subtotal
+                      index === 2 && "w-1/6", // Total Amount  
+                      index === 3 && "w-1/6", // Payment Status
+                      index === 4 && "w-1/12" // Actions - narrower
                     )}
                     onClick={() => handleSort(column.key)}
                   >
-                    <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "flex items-center gap-2",
+                      column.align === 'right' ? "justify-end" : column.align === 'center' ? "justify-center" : "justify-start"
+                    )}>
                       {column.header}
                       {sortable && (
                         <div className="flex flex-col">
@@ -192,13 +171,22 @@ const DataTable = ({
                   <tr
                     key={index}
                     className={cn(
-                      "hover:bg-gray-50 transition-colors",
-                      onRowClick && "cursor-pointer"
+                      "transition-colors duration-150",
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50/50",
+                      onRowClick && "cursor-pointer hover:bg-blue-50",
+                      !onRowClick && "hover:bg-gray-100"
                     )}
                     onClick={() => onRowClick?.(row)}
                   >
-                    {columns.map((column) => (
-                      <td key={column.key} className="px-4 py-3 text-sm text-gray-900">
+                    {columns.map((column, colIndex) => (
+                      <td 
+                        key={column.key} 
+                        className={cn(
+                          "px-4 py-4 text-sm text-gray-900",
+                          // Ensure content doesn't overflow in fixed columns
+                          "overflow-hidden"
+                        )}
+                      >
                         {column.render ? column.render(row[column.key], row) : row[column.key]}
                       </td>
                     ))}
