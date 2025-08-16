@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// const API_BASE_URL = 'http://localhost:8888/vm/api';
-const API_BASE_URL = 'http://13.60.223.91:8888/vm/api';
+const API_BASE_URL = 'http://localhost:8888/vm/api';
+// const API_BASE_URL = 'http://13.60.223.91:8888/vm/api';
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -821,6 +821,14 @@ export const billGenerationAPI = {
   updateBill: async (billId, billData) => {
     const response = await api.put(`/service-center/bookings/bills/${billId}`, billData);
     return response.data;
+  },
+
+  // Generate PDF for bill
+  generatePdf: async (pdfData) => {
+    const response = await api.post('/service-center/bookings/bills/generate-pdf', pdfData, {
+      responseType: 'blob' // Important for handling binary PDF data
+    });
+    return response; // Return the full response object to access blob and headers
   }
 };
 

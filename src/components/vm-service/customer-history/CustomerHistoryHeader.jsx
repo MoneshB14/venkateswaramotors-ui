@@ -82,22 +82,22 @@ const CustomerHistoryHeader = ({
                         </div>
                     </div>
 
-                                {/* Right: Action Bar */}
-            <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2 border border-gray-200 shadow-sm">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onRefresh}
-                    disabled={loading}
-                    className="h-8 px-2 sm:px-3 hover:bg-gray-100"
-                    title="Refresh data"
-                    aria-label="Refresh customer data"
-                >
-                    <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                    <span className="hidden lg:inline ml-1">Refresh</span>
-                </Button>
+                    {/* Right: Action Bar */}
+                    <div className="flex items-center gap-1 sm:gap-2 bg-white rounded-lg px-2 sm:px-3 py-2 border border-gray-200 shadow-sm">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onRefresh}
+                            disabled={loading}
+                            className="h-8 px-2 sm:px-3 hover:bg-gray-100"
+                            title="Refresh data"
+                            aria-label="Refresh customer data"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            <span className="hidden lg:inline ml-1">Refresh</span>
+                        </Button>
 
-                {onShowFilters && (
+                        {/* {onShowFilters && (
                     <Button
                         variant="ghost"
                         size="sm"
@@ -112,9 +112,9 @@ const CustomerHistoryHeader = ({
                             <div className="w-1.5 h-1.5 bg-blue-500 rounded-full ml-1"></div>
                         )}
                     </Button>
-                )}
+                )} */}
 
-                <Button
+                        {/* <Button
                     variant="ghost"
                     size="sm"
                     onClick={onExport}
@@ -136,21 +136,21 @@ const CustomerHistoryHeader = ({
                 >
                     <Bell className="h-4 w-4" />
                     <span className="hidden lg:inline ml-1">Remind</span>
-                </Button>
+                </Button> */}
 
-                <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
+                        <div className="w-px h-6 bg-gray-300 hidden sm:block"></div>
 
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onClose}
-                    className="h-8 w-8 p-0 hover:bg-gray-100"
-                    title="Close modal"
-                    aria-label="Close customer details"
-                >
-                    <X className="h-4 w-4" />
-                </Button>
-            </div>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onClose}
+                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                            title="Close modal"
+                            aria-label="Close customer details"
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
 

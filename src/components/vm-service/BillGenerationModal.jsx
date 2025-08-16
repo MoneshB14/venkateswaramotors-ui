@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useToast } from '../../hooks/useToast';
 import { serviceTypes } from '../../config/menuConfig';
+import { billGenerationAPI } from '../../services/api';
 
 const BillGenerationModal = ({
     isOpen,
@@ -53,6 +54,7 @@ const BillGenerationModal = ({
     });
 
     const [isSaving, setIsSaving] = useState(false);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
     // Add new part to the list
     const addPart = () => {
@@ -274,15 +276,176 @@ const BillGenerationModal = ({
         }
     };
 
-    // Handle bill print
-    const handleBillPrint = () => {
-        // Set document title for print
-        const originalTitle = document.title;
-        document.title = `Bill-${booking.bookingId}-${booking.customerName}`;
+    // Handle PDF generation and download
+    const handlePdfDownload = async () => {
+        if (isGeneratingPdf) return; // Prevent multiple requests
 
-        // Print and restore title
-        window.print();
-        document.title = originalTitle;
+        try {
+            setIsGeneratingPdf(true);
+
+            // Get the bill content HTML
+            const billContent = document.querySelector('.bg-white.rounded-lg.shadow-xl');
+            if (!billContent) {
+                toast.error('Error', 'Could not find bill content to generate PDF.');
+                return;
+            }
+
+            // Get the inner HTML of the bill content, excluding the modal header and footer
+            const billInnerContent = billContent.querySelector('.relative.p-4.space-y-4');
+            if (!billInnerContent) {
+                toast.error('Error', 'Could not extract bill content for PDF generation.');
+                return;
+            }
+
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <title>Service Bill - ${booking.bookingId}</title>
+                    <style>
+                        body { 
+                            font-family: Arial, sans-serif; 
+                            margin: 0; 
+                            padding: 20px; 
+                            font-size: 12px;
+                            line-height: 1.4;
+                        }
+                        .bill-container { 
+                            max-width: 800px; 
+                            margin: 0 auto; 
+                        }
+                        .grid { display: grid; }
+                        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+                        .grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                        .grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+                        .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+                        .col-span-2 { grid-column: span 2 / span 2; }
+                        .col-span-4 { grid-column: span 4 / span 4; }
+                        .gap-2 { gap: 0.5rem; }
+                        .gap-3 { gap: 0.75rem; }
+                        .gap-4 { gap: 1rem; }
+                        .gap-8 { gap: 2rem; }
+                        .space-y-1 > * + * { margin-top: 0.25rem; }
+                        .space-y-2 > * + * { margin-top: 0.5rem; }
+                        .space-y-3 > * + * { margin-top: 0.75rem; }
+                        .space-y-4 > * + * { margin-top: 1rem; }
+                        .border { border: 1px solid #d1d5db; }
+                        .border-2 { border: 2px solid; }
+                        .border-t { border-top: 1px solid #d1d5db; }
+                        .border-b { border-bottom: 1px solid #d1d5db; }
+                        .border-b-2 { border-bottom: 2px solid; }
+                        .border-gray-200 { border-color: #e5e7eb; }
+                        .border-gray-300 { border-color: #d1d5db; }
+                        .border-gray-400 { border-color: #9ca3af; }
+                        .border-blue-200 { border-color: #dbeafe; }
+                        .border-blue-300 { border-color: #93c5fd; }
+                        .border-green-200 { border-color: #bbf7d0; }
+                        .rounded { border-radius: 0.25rem; }
+                        .rounded-lg { border-radius: 0.5rem; }
+                        .p-2 { padding: 0.5rem; }
+                        .p-3 { padding: 0.75rem; }
+                        .p-4 { padding: 1rem; }
+                        .px-2 { padding-left: 0.5rem; padding-right: 0.5rem; }
+                        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+                        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+                        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+                        .pt-2 { padding-top: 0.5rem; }
+                        .pt-3 { padding-top: 0.75rem; }
+                        .pt-4 { padding-top: 1rem; }
+                        .pb-1 { padding-bottom: 0.25rem; }
+                        .pb-4 { padding-bottom: 1rem; }
+                        .mb-1 { margin-bottom: 0.25rem; }
+                        .mb-2 { margin-bottom: 0.5rem; }
+                        .mb-3 { margin-bottom: 0.75rem; }
+                        .mt-1 { margin-top: 0.25rem; }
+                        .mt-2 { margin-top: 0.5rem; }
+                        .mt-4 { margin-top: 1rem; }
+                        .mt-6 { margin-top: 1.5rem; }
+                        .my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; }
+                        .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
+                        .text-xs { font-size: 0.75rem; }
+                        .text-sm { font-size: 0.875rem; }
+                        .text-base { font-size: 1rem; }
+                        .text-lg { font-size: 1.125rem; }
+                        .text-xl { font-size: 1.25rem; }
+                        .text-2xl { font-size: 1.5rem; }
+                        .font-medium { font-weight: 500; }
+                        .font-semibold { font-weight: 600; }
+                        .font-bold { font-weight: 700; }
+                        .text-left { text-align: left; }
+                        .text-right { text-align: right; }
+                        .text-center { text-align: center; }
+                        .text-gray-600 { color: #4b5563; }
+                        .text-gray-700 { color: #374151; }
+                        .text-gray-800 { color: #1f2937; }
+                        .text-gray-900 { color: #111827; }
+                        .text-blue-600 { color: #2563eb; }
+                        .text-blue-700 { color: #1d4ed8; }
+                        .text-blue-800 { color: #1e40af; }
+                        .text-green-600 { color: #16a34a; }
+                        .text-green-700 { color: #15803d; }
+                        .text-red-600 { color: #dc2626; }
+                        .bg-white { background-color: #ffffff; }
+                        .bg-gray-50 { background-color: #f9fafb; }
+                        .bg-blue-50 { background-color: #eff6ff; }
+                        .bg-blue-100 { background-color: #dbeafe; }
+                        .bg-blue-700 { background-color: #1d4ed8; }
+                        .bg-green-50 { background-color: #f0fdf4; }
+                        .capitalize { text-transform: capitalize; }
+                        .flex { display: flex; }
+                        .items-center { align-items: center; }
+                        .justify-between { justify-content: space-between; }
+                        .w-full { width: 100%; }
+                        .h-16 { height: 4rem; }
+                        @media print {
+                            body { margin: 0; padding: 10px; }
+                            .bill-container { max-width: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="bill-container">
+                        ${billInnerContent.innerHTML}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // Generate filename
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `VM_Bill_${booking.bookingId}_${timestamp}.pdf`;
+
+            // Make API call to generate PDF using the API service
+            const response = await billGenerationAPI.generatePdf({
+                htmlContent: htmlContent,
+                filename: filename,
+                customCss: '' // CSS is already included in the HTML
+            });
+
+            // Get the PDF blob from the response
+            const blob = response.data;
+
+            // Create download link and trigger download
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            toast.success('PDF Generated', 'Bill PDF has been downloaded successfully!');
+
+        } catch (error) {
+            console.error('Error generating PDF:', error);
+            // Use the enhanced error message from API interceptor if available
+            const errorMessage = error.userMessage || error.message || 'Failed to generate PDF. Please try again.';
+            toast.error('PDF Generation Failed', errorMessage);
+        } finally {
+            setIsGeneratingPdf(false);
+        }
     };
 
     // Get service type name
@@ -335,12 +498,12 @@ const BillGenerationModal = ({
                     <div className="flex items-center justify-between p-4 border-b border-gray-200 print:hidden">
                         <div className="flex items-center space-x-2">
                             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${mode === 'edit'
-                                    ? 'bg-blue-100'
-                                    : 'bg-green-100'
+                                ? 'bg-blue-100'
+                                : 'bg-green-100'
                                 }`}>
                                 <FileText className={`h-4 w-4 ${mode === 'edit'
-                                        ? 'text-blue-600'
-                                        : 'text-green-600'
+                                    ? 'text-blue-600'
+                                    : 'text-green-600'
                                     }`} />
                             </div>
                             <div>
@@ -882,31 +1045,29 @@ const BillGenerationModal = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={handleBillPrint}
-                            className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                            onClick={handlePdfDownload}
+                            disabled={isGeneratingPdf}
+                            className="border-purple-300 text-purple-700 hover:bg-purple-50 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            <Printer className="h-3 w-3 mr-1" />
-                            Print
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                                // Convert to PDF functionality can be added here
-                                toast.info('PDF Download', 'PDF download functionality coming soon!');
-                            }}
-                            className="border-purple-300 text-purple-700 hover:bg-purple-50"
-                        >
-                            <Download className="h-3 w-3 mr-1" />
-                            PDF
+                            {isGeneratingPdf ? (
+                                <>
+                                    <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                    Generating...
+                                </>
+                            ) : (
+                                <>
+                                    <Download className="h-3 w-3 mr-1" />
+                                    PDF
+                                </>
+                            )}
                         </Button>
                         <Button
                             size="sm"
                             onClick={handleBillSave}
                             disabled={isSaving || loadingBill}
                             className={`text-white disabled:opacity-50 disabled:cursor-not-allowed ${mode === 'edit'
-                                    ? 'bg-blue-600 hover:bg-blue-700'
-                                    : 'bg-green-600 hover:bg-green-700'
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-green-600 hover:bg-green-700'
                                 }`}
                         >
                             {isSaving ? (

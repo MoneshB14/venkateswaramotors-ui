@@ -498,8 +498,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
       PENDING: ['CONFIRMED', 'CANCELLED'],
       CONFIRMED: ['IN_PROGRESS', 'CANCELLED'],
       IN_PROGRESS: ['COMPLETED', 'CANCELLED'],
-      COMPLETED: ['DELIVERED', 'CANCELLED'],
-      DELIVERED: ['CANCELLED'],
+      COMPLETED: ['CANCELLED'],
       CANCELLED: []
     };
 
@@ -598,7 +597,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
         console.log('Updating existing bill:', billInfo);
         response = await billGenerationAPI.updateBill(existingBill.id, billInfo);
         if (response.success) {
-          toast.success('✅ Bill Updated Successfully', `Bill ${response.billNumber || existingBill.billNumber} has been updated.`);
+          toast.success('Bill Updated Successfully', `Bill ${response.billNumber || existingBill.billNumber} has been updated.`);
           // Refresh bookings to update billGenerated status
           fetchBookings();
           return response; // Return success response
