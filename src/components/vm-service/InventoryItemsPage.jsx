@@ -23,6 +23,7 @@ import {
   FileText
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
+import { useAuth } from '../../hooks/useAuth';
 import { inventoryAPI } from '../../services/api';
 import { InventoryItemForm, StockAdjustmentForm } from './InventoryForms';
 
@@ -50,6 +51,7 @@ const InventoryItemsPage = () => {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showStockAdjustmentModal, setShowStockAdjustmentModal] = useState(false);
   const { confirmDelete, toast } = useGlobal();
+  const { canDelete } = useAuth();
 
   // Form states
   const [itemForm, setItemForm] = useState({
@@ -846,14 +848,16 @@ const InventoryItemsPage = () => {
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteItem(item.id)}
-                              className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {canDelete() && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteItem(item.id)}
+                                className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

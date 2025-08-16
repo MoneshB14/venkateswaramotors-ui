@@ -32,6 +32,7 @@ import { useGlobal } from '../../contexts/GlobalContext';
 import { bookingsAPI, billGenerationAPI } from '../../services/api';
 import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
 import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../hooks/useAuth';
 import BookingForm from './BookingForm';
 import BookingDetailsModal from './BookingDetailsModal';
 import BillGenerationModal from './BillGenerationModal';
@@ -67,6 +68,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const [updatingStatus, setUpdatingStatus] = useState({});
   const { confirmDelete } = useGlobal();
   const { toast } = useToast();
+  const { canDelete } = useAuth();
 
   // Update filters when initialFilters prop changes
   useEffect(() => {
@@ -1108,15 +1110,17 @@ const BookingsManagement = ({ initialFilters = null }) => {
                                 <FileText className="h-4 w-4" />
                               )}
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteBooking(booking.bookingId)}
-                              className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
-                              title="Delete Booking"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {canDelete() && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDeleteBooking(booking.bookingId)}
+                                className="h-8 w-8 p-0 border-red-300 text-red-700 hover:bg-red-50"
+                                title="Delete Booking"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -10,6 +10,7 @@ import {
 } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import { menuItems } from '../../config/menuConfig';
+import { useAuth } from '../../hooks/useAuth';
 
 const CollapsibleSidebar = ({
   activeMenu,
@@ -20,27 +21,40 @@ const CollapsibleSidebar = ({
   isCollapsed: externalIsCollapsed,
   onCollapseToggle: externalOnCollapseToggle
 }) => {
+  const { canAccessUsers } = useAuth();
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
   
   // Use external state if provided, otherwise use internal state
   const isCollapsed = externalIsCollapsed !== undefined ? externalIsCollapsed : internalIsCollapsed;
   const toggleCollapse = externalOnCollapseToggle || (() => setInternalIsCollapsed(!internalIsCollapsed));
 
-  // Group menu items by category
+  // Filter menu items based on user role
+  const getFilteredMenuItems = () => {
+    return menuItems.filter(item => {
+      // If it's the users tab, check if user has access
+      if (item.id === 'users') {
+        return canAccessUsers();
+      }
+      // For all other menu items, allow access
+      return true;
+    });
+  };
+
+  // Group menu items by category with role-based filtering
   const menuGroups = [
     {
       title: 'Core',
-      items: menuItems.filter(item => ['overview', 'bookings', 'customers'].includes(item.id))
+      items: getFilteredMenuItems().filter(item => ['overview', 'bookings', 'customers'].includes(item.id))
     },
     {
       title: 'Management',
-      items: menuItems.filter(item => ['inventory'].includes(item.id))
+      items: getFilteredMenuItems().filter(item => ['inventory'].includes(item.id))
     },
     {
       title: 'System',
-      items: menuItems.filter(item => ['users'].includes(item.id))
+      items: getFilteredMenuItems().filter(item => ['users'].includes(item.id))
     }
-  ];
+  ].filter(group => group.items.length > 0); // Only show groups that have items
 
   return (
     <>

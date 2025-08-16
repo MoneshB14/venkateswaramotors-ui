@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { useGlobal } from '../../contexts/GlobalContext';
 import { userManagementAPI } from '../../services/api';
+import { useAuth } from '../../hooks/useAuth';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -63,6 +64,7 @@ const UserManagement = () => {
     lockedUsers: 0
   });
   const { confirmDelete, showSuccess, showError } = useGlobal();
+  const { canDelete } = useAuth();
 
   // User form state
   const [userForm, setUserForm] = useState({
@@ -622,15 +624,17 @@ const UserManagement = () => {
                         {user.role === 'ADMIN' ? 'Make User' : 'Make Admin'}
                       </Button>
                       
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="flex items-center gap-1 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                        Delete
-                      </Button>
+                      {canDelete() && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteUser(user.id)}
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                          Delete
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>

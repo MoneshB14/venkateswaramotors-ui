@@ -30,6 +30,7 @@ export const AuthProvider = ({ children }) => {
           email: response.email,
           firstName: response.firstName,
           lastName: response.lastName,
+          role: response.role,
         });
       } else {
         // User is not authenticated
@@ -67,6 +68,7 @@ export const AuthProvider = ({ children }) => {
           email: response.email,
           firstName: response.firstName,
           lastName: response.lastName,
+          role: response.role,
         });
         return { success: true };
       } else {
@@ -210,6 +212,25 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
+  // Helper functions for role-based access control
+  const isAdmin = () => {
+    return user?.role === 'ADMIN';
+  };
+
+  const isUser = () => {
+    return user?.role === 'USER';
+  };
+
+  const canDelete = () => {
+    // ADMIN has full access, USER cannot delete
+    return user?.role === 'ADMIN';
+  };
+
+  const canAccessUsers = () => {
+    // ADMIN has full access, USER cannot access users tab
+    return user?.role === 'ADMIN';
+  };
+
   const value = {
     user,
     loading,
@@ -222,6 +243,10 @@ export const AuthProvider = ({ children }) => {
     refreshAuth,
     clearError,
     isAuthenticated: !!user,
+    isAdmin,
+    isUser,
+    canDelete,
+    canAccessUsers,
   };
 
   return (

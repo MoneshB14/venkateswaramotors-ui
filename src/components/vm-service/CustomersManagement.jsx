@@ -27,9 +27,11 @@ import { useGlobal } from '../../contexts/GlobalContext';
 import { customersAPI } from '../../services/api';
 import CustomerHistoryModal from './CustomerHistoryModal';
 import { useToast } from '../../hooks/useToast';
+import { useAuth } from '../../hooks/useAuth';
 
 const CustomersManagement = () => {
   const { toast } = useToast();
+  const { canDelete } = useAuth();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
