@@ -52,8 +52,8 @@ const CollapsibleSidebar = ({
           inset-y-0 left-0 z-50 lg:z-40
           transition-all duration-300 ease-in-out 
           bg-white border-r border-gray-200 shadow-lg lg:shadow-sm
-          ${isCollapsed ? 'w-16' : 'w-48'}
-          relative overflow-hidden
+          ${isCollapsed ? 'w-16' : 'w-64 sm:w-48'}
+          overflow-hidden
         `}
       >
         {/* Empty SidebarHeader since we now have unified header */}

@@ -77,8 +77,8 @@ const Dashboard = () => {
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto bg-gray-50">
-          <div className="p-3 sm:p-4 lg:p-6 min-h-full flex flex-col items-center justify-center">
-            <div className="w-full max-w-7xl">
+          <div className="p-2 sm:p-3 md:p-4 lg:p-6 min-h-full">
+            <div className="w-full max-w-7xl mx-auto">
               <DashboardContent 
                 activeMenu={activeMenu} 
                 onMenuClick={handleMenuClick}
