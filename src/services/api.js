@@ -829,6 +829,12 @@ export const billGenerationAPI = {
       responseType: 'blob' // Important for handling binary PDF data
     });
     return response; // Return the full response object to access blob and headers
+  },
+
+  // Share bill via email with PDF
+  shareBill: async (emailWithPdfData) => {
+    const response = await api.post('/service-center/bookings/bills/send-email-with-pdf', emailWithPdfData);
+    return response.data;
   }
 };
 

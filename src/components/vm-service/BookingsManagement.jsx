@@ -66,6 +66,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
   const [pageSize, setPageSize] = useState(10);
   const [totalBookings, setTotalBookings] = useState(0);
   const [updatingStatus, setUpdatingStatus] = useState({});
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState({});
   const { confirmDelete } = useGlobal();
   const { toast } = useToast();
   const { canDelete } = useAuth();
@@ -351,6 +352,7 @@ const BookingsManagement = ({ initialFilters = null }) => {
   // Handle booking status update
   const handleStatusUpdate = async (bookingId, newStatus) => {
     setUpdatingStatus(prev => ({ ...prev, [bookingId]: true }));
+    setStatusDropdownOpen(prev => ({ ...prev, [bookingId]: false })); // Close dropdown after selection
 
     try {
       const response = await bookingsAPI.updateBooking(bookingId, {
@@ -370,6 +372,24 @@ const BookingsManagement = ({ initialFilters = null }) => {
       setUpdatingStatus(prev => ({ ...prev, [bookingId]: false }));
     }
   };
+
+  // Toggle status dropdown
+  const toggleStatusDropdown = (bookingId) => {
+    setStatusDropdownOpen(prev => ({
+      ...prev,
+      [bookingId]: !prev[bookingId]
+    }));
+  };
+
+  // Close all status dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setStatusDropdownOpen({});
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   // Handle booking save (create or update)
   const handleBookingSave = (booking) => {
@@ -1033,8 +1053,12 @@ const BookingsManagement = ({ initialFilters = null }) => {
                           <div className="flex items-center space-x-2">
                             {getStatusBadge(booking.bookingStatus)}
                             {getNextStatusOptions(booking.bookingStatus).length > 0 && (
-                              <div className="relative group">
+                              <div className="relative">
                                 <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    toggleStatusDropdown(booking.bookingId);
+                                  }}
                                   className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-gray-300 bg-white hover:bg-gray-50 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                                   disabled={loading || updatingStatus[booking.bookingId]}
                                   title="Update Status"
@@ -1042,25 +1066,30 @@ const BookingsManagement = ({ initialFilters = null }) => {
                                   {updatingStatus[booking.bookingId] ? (
                                     <Loader2 className="h-3 w-3 animate-spin text-blue-600" />
                                   ) : (
-                                    <ChevronDown className="h-3 w-3 text-gray-600" />
+                                    <ChevronDown className={`h-3 w-3 text-gray-600 transition-transform duration-200 ${statusDropdownOpen[booking.bookingId] ? 'rotate-180' : ''}`} />
                                   )}
                                 </button>
 
                                 {/* Dropdown Menu */}
-                                <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                                  <div className="py-1">
-                                    {getNextStatusOptions(booking.bookingStatus).map((status) => (
-                                      <button
-                                        key={status}
-                                        onClick={() => handleStatusUpdate(booking.bookingId, status)}
-                                        className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-150"
-                                        disabled={updatingStatus[booking.bookingId]}
-                                      >
-                                        {status.replace('_', ' ')}
-                                      </button>
-                                    ))}
+                                {statusDropdownOpen[booking.bookingId] && (
+                                  <div className="absolute right-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                                    <div className="py-1">
+                                      {getNextStatusOptions(booking.bookingStatus).map((status) => (
+                                        <button
+                                          key={status}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleStatusUpdate(booking.bookingId, status);
+                                          }}
+                                          className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-150"
+                                          disabled={updatingStatus[booking.bookingId]}
+                                        >
+                                          {status.replace('_', ' ')}
+                                        </button>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
+                                )}
                               </div>
                             )}
                           </div>
