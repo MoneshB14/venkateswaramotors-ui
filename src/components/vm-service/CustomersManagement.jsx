@@ -373,13 +373,13 @@ const CustomersManagement = () => {
             Manage customer information and service history
           </p>
         </div>
-        <Button
+        {/* <Button
           onClick={() => setShowCustomerForm(true)}
           className="bg-green-600 hover:bg-green-700 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Customer
-        </Button>
+        </Button> */}
       </div>
 
       {/* Filters and Search */}
@@ -522,8 +522,8 @@ const CustomersManagement = () => {
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No customers found</h3>
                 <p className="text-gray-500 mb-4">
-                  {Object.values(filters).some(f => f) 
-                    ? 'Try adjusting your filters to see more results.' 
+                  {Object.values(filters).some(f => f)
+                    ? 'Try adjusting your filters to see more results.'
                     : 'Get started by adding your first customer.'}
                 </p>
                 {!Object.values(filters).some(f => f) && (
