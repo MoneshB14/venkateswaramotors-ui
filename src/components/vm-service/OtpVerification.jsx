@@ -121,11 +121,11 @@ const OtpVerification = () => {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="max-w-md w-full text-center">
-          <div className="card p-8">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+          <div className="card p-4 sm:p-8">
+            <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Verification Successful!</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">Verification Successful!</h2>
             <p className="text-gray-600 mb-4">Welcome back to Venkateswara Motors</p>
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
             <p className="text-sm text-gray-500 mt-2">Redirecting to dashboard...</p>
@@ -139,7 +139,7 @@ const OtpVerification = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         {/* Header */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6 sm:mb-8">
           <Link
             to="/service/login"
             className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors"
@@ -147,22 +147,22 @@ const OtpVerification = () => {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Login
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Verify OTP</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Verify OTP</h1>
+          <p className="text-sm sm:text-base text-gray-600">
             Enter the 6-digit code sent to{' '}
-            <span className="font-medium text-gray-900">{email}</span>
+            <span className="font-medium text-gray-900 break-all">{email}</span>
           </p>
         </div>
 
         {/* OTP Form */}
-        <div className="card p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="card p-4 sm:p-8">
+          <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
             {/* OTP Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-3 sm:mb-4">
                 Verification Code
               </label>
-              <div className="flex justify-between gap-2">
+              <div className="flex justify-between gap-1 sm:gap-2">
                 {otp.map((digit, index) => (
                   <input
                     key={index}
@@ -175,7 +175,7 @@ const OtpVerification = () => {
                     onChange={(e) => handleOtpChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     onPaste={handlePaste}
-                    className={`w-12 h-12 text-center text-lg font-semibold border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.otp ? 'border-red-500' : 'border-gray-300'
+                    className={`flex-1 max-w-[45px] sm:max-w-[48px] h-10 sm:h-12 text-center text-base sm:text-lg font-semibold border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${errors.otp ? 'border-red-500' : 'border-gray-300'
                       }`}
                   />
                 ))}
@@ -210,7 +210,7 @@ const OtpVerification = () => {
           </form>
 
           {/* Resend OTP */}
-          <div className="mt-6 text-center">
+          <div className="mt-4 sm:mt-6 text-center">
             <p className="text-gray-600 mb-3">
               Didn't receive the code?
             </p>
@@ -236,21 +236,21 @@ const OtpVerification = () => {
           </div>
 
           {/* Back to Login */}
-          <div className="mt-6 text-center">
-                      <Link
-            to="/service/login"
-            className="text-gray-600 hover:text-gray-800 font-medium transition-colors"
-          >
+          <div className="mt-4 sm:mt-6 text-center">
+            <Link
+              to="/service/login"
+              className="text-gray-600 hover:text-gray-800 font-medium transition-colors"
+            >
               Use different email
             </Link>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-8">
+        <div className="text-center mt-6 sm:mt-8">
           <p className="text-sm text-gray-500">
             Having trouble?{' '}
-                          <a href="#" className="text-blue-600 hover:text-blue-700">Contact support</a>
+            <a href="#" className="text-blue-600 hover:text-blue-700">Contact support</a>
           </p>
         </div>
       </div>

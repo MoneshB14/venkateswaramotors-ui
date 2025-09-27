@@ -1,7 +1,21 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8888/vm/api';
-// const API_BASE_URL = 'http://13.60.223.91:8888/vm/api';
+//const API_BASE_URL = 'http://localhost:8888/vm/api';
+const API_BASE_URL = 'http://13.60.223.91:8888/vm/api';
+
+// Global loading state management
+let activeRequests = 0;
+let loadingCallbacks = {
+  show: null,
+  hide: null
+};
+
+// Set loading callbacks (to be called from the app)
+export const setLoadingCallbacks = (showCallback, hideCallback) => {
+  loadingCallbacks.show = showCallback;
+  loadingCallbacks.hide = hideCallback;
+};
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -11,10 +25,39 @@ const api = axios.create({
   withCredentials: true, // Enable cookies to be sent with requests
 });
 
+// Request interceptor to show loading
+api.interceptors.request.use(
+  (config) => {
+    activeRequests++;
+    if (activeRequests === 1 && loadingCallbacks.show) {
+      loadingCallbacks.show('Loading...');
+    }
+    return config;
+  },
+  (error) => {
+    activeRequests--;
+    if (activeRequests === 0 && loadingCallbacks.hide) {
+      loadingCallbacks.hide();
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    activeRequests--;
+    if (activeRequests === 0 && loadingCallbacks.hide) {
+      loadingCallbacks.hide();
+    }
+    return response;
+  },
   (error) => {
+    activeRequests--;
+    if (activeRequests === 0 && loadingCallbacks.hide) {
+      loadingCallbacks.hide();
+    }
+
     // Log the error for debugging
     console.error('API Error:', error);
 
@@ -72,7 +115,9 @@ export const vmServiceAuth = {
 
   // Resend OTP
   resendOtp: async (email) => {
-    const response = await api.post('/service-center/auth/resend-otp', { email });
+    const response = await api.post('/service-center/auth/resend-otp', null, {
+      params: { email }
+    });
     return response.data;
   },
 };

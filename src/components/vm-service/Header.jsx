@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
-import { 
-  Bell, 
-  Settings, 
+import {
+  Bell,
+  Settings,
   Menu,
   X,
   LogOut,
@@ -18,7 +18,7 @@ const Header = ({
   variant = 'desktop', // 'desktop', 'mobile', 'sidebar', 'unified'
   isCollapsed = false,
   isOpen = false,
-  
+
   // Content props
   title = 'Dashboard',
   subtitle = 'Welcome to your dashboard',
@@ -26,18 +26,15 @@ const Header = ({
   showUserInfo = true,
   showNotifications = true,
   showSettings = true,
-  showLogout = true,
-  showSearch = false,
-  
+
   // Action props
   onMenuToggle,
   onCollapseToggle,
   onLogout,
-  onClose,
-  
+
   // User data
   user,
-  
+
   // Styling
   className = '',
   logoText = 'VM',
@@ -108,7 +105,7 @@ const Header = ({
         </div>
         <ChevronDown className={`h-3.5 w-3.5 text-gray-400 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
       </Button>
-      
+
       {isProfileDropdownOpen && (
         <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
           <div className="px-4 py-4 border-b border-gray-100">
@@ -138,27 +135,9 @@ const Header = ({
     </div>
   );
 
-  const renderNotifications = () => (
-    <Button 
-      variant="ghost" 
-      size="icon" 
-      className="relative h-9 w-9 rounded-lg hover:bg-gray-100 transition-colors duration-200 opacity-50"
-    >
-      <Bell className="h-4 w-4 text-gray-600" />
-      {/* Hide notification dot for now */}
-      {/* <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white"></span> */}
-    </Button>
-  );
+  const renderNotifications = () => null;
 
-  const renderSettings = () => (
-    <Button 
-      variant="ghost" 
-      size="icon"
-      className="h-9 w-9 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-    >
-      <Settings className="h-4 w-4 text-gray-600" />
-    </Button>
-  );
+  const renderSettings = () => null;
 
   const renderCollapseButton = () => (
     <Button
@@ -192,7 +171,7 @@ const Header = ({
           <div className="flex items-center space-x-3 sm:space-x-6">
             {/* Mobile Menu Button */}
             {renderMobileMenuButton()}
-            
+
             {/* Logo and Company Name */}
             <div className="flex items-center">
               {showLogo && renderLogo()}
@@ -200,14 +179,14 @@ const Header = ({
                 {renderCompanyInfo()}
               </div>
             </div>
-            
+
             {/* Collapse Button (Desktop) */}
             {onCollapseToggle && (
               <div className="hidden lg:block">
                 {renderCollapseButton()}
               </div>
             )}
-            
+
             {/* Page Title and Subtitle */}
             <div className="hidden lg:block relative">
               <h1 className="text-lg font-semibold text-gray-900 leading-tight">
@@ -271,7 +250,7 @@ const Header = ({
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-2">
             {showNotifications && renderNotifications()}
             {showUserInfo && renderProfileDropdown()}

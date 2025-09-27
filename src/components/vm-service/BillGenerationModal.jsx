@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Separator } from '../ui/separator';
 import {
     FileText,
     Download,
-    Printer,
     Calculator,
     Save,
     X,
@@ -44,7 +42,6 @@ const BillGenerationModal = ({
         laborCharges: 0,
         additionalCharges: 0,
         discount: 0,
-        taxRate: 0, // GST 18%
         notes: '',
         paymentStatus: 'PENDING',
         // Additional services
@@ -136,7 +133,6 @@ const BillGenerationModal = ({
                     laborCharges: existingBill.laborCharges || 0,
                     additionalCharges: existingBill.additionalCharges || 0,
                     discount: existingBill.discount || 0,
-                    taxRate: existingBill.taxRate || 18,
                     notes: existingBill.notes || '',
                     paymentStatus: existingBill.paymentStatus || 'PENDING',
                     // Additional services
@@ -158,7 +154,6 @@ const BillGenerationModal = ({
                     laborCharges: 0,
                     additionalCharges: 0,
                     discount: 0,
-                    taxRate: 18,
                     notes: '',
                     paymentStatus: 'PENDING',
                     // Additional services
@@ -182,34 +177,23 @@ const BillGenerationModal = ({
 
     // Calculate bill totals
     const calculateBillTotals = () => {
-        const { serviceCharges, laborCharges, additionalCharges, discount, taxRate, waterWash, waterWashCharges } = billData;
+        const { serviceCharges, laborCharges, additionalCharges, discount, waterWash, waterWashCharges } = billData;
         const partsTotal = calculatePartsTotal();
         const waterWashTotal = waterWash ? waterWashCharges : 0;
 
         const subtotal = serviceCharges + partsTotal + laborCharges + additionalCharges + waterWashTotal;
         const discountAmount = (subtotal * discount) / 100;
-        const afterDiscount = subtotal - discountAmount;
-        const taxAmount = (afterDiscount * taxRate) / 100;
-        const total = afterDiscount + taxAmount;
+        const total = subtotal - discountAmount;
 
         return {
             subtotal,
             partsTotal,
             waterWashTotal,
             discountAmount,
-            afterDiscount,
-            taxAmount,
             total
         };
     };
 
-    // Handle bill data changes
-    const handleBillDataChange = (field, value) => {
-        setBillData(prev => ({
-            ...prev,
-            [field]: field === 'notes' || field === 'paymentStatus' ? value : (value === '' ? 0 : parseFloat(value) || 0)
-        }));
-    };
 
     // Handle number input changes with proper formatting
     const handleNumberInputChange = (field, value) => {
@@ -259,9 +243,6 @@ const BillGenerationModal = ({
                 subtotal: totals.subtotal,
                 discount: billData.discount || 0,
                 discountAmount: totals.discountAmount || 0,
-                afterDiscount: totals.afterDiscount,
-                taxRate: billData.taxRate || 18,
-                taxAmount: totals.taxAmount,
                 total: totals.total,
                 paymentStatus: billData.paymentStatus || 'PENDING',
                 workDescription: billData.workDescription || '',
@@ -370,44 +351,46 @@ const BillGenerationModal = ({
                         .mt-6 { margin-top: 1.5rem; }
                         .my-2 { margin-top: 0.5rem; margin-bottom: 0.5rem; }
                         .my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
-                        .text-xs { font-size: 0.75rem; }
-                        .text-sm { font-size: 0.875rem; }
-                        .text-base { font-size: 1rem; }
-                        .text-lg { font-size: 1.125rem; }
-                        .text-xl { font-size: 1.25rem; }
-                        .text-2xl { font-size: 1.5rem; }
-                        .font-medium { font-weight: 500; }
-                        .font-semibold { font-weight: 600; }
-                        .font-bold { font-weight: 700; }
-                        .text-left { text-align: left; }
-                        .text-right { text-align: right; }
-                        .text-center { text-align: center; }
-                        .text-gray-600 { color: #4b5563; }
-                        .text-gray-700 { color: #374151; }
-                        .text-gray-800 { color: #1f2937; }
-                        .text-gray-900 { color: #111827; }
-                        .text-blue-600 { color: #2563eb; }
-                        .text-blue-700 { color: #1d4ed8; }
-                        .text-blue-800 { color: #1e40af; }
-                        .text-green-600 { color: #16a34a; }
-                        .text-green-700 { color: #15803d; }
-                        .text-red-600 { color: #dc2626; }
-                        .bg-white { background-color: #ffffff; }
-                        .bg-gray-50 { background-color: #f9fafb; }
-                        .bg-blue-50 { background-color: #eff6ff; }
-                        .bg-blue-100 { background-color: #dbeafe; }
-                        .bg-blue-700 { background-color: #1d4ed8; }
-                        .bg-green-50 { background-color: #f0fdf4; }
-                        .capitalize { text-transform: capitalize; }
-                        .flex { display: flex; }
-                        .items-center { align-items: center; }
-                        .justify-between { justify-content: space-between; }
-                        .w-full { width: 100%; }
-                        .h-16 { height: 4rem; }
-                        @media print {
-                            body { margin: 0; padding: 10px; }
-                            .bill-container { max-width: none; }
-                        }
+                        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+                        .bill-container { width: 210mm; min-height: 297mm; margin: 20px auto; background-color: #fff; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 30px; box-sizing: border-box; }
+                        .bill-header { display: flex; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+                        .company-logo img { max-width: 80px; height: auto; margin-right: 20px; }
+                        .company-info { flex-grow: 1; }
+                        .company-info h1 { font-family: 'Montserrat', sans-serif; font-size: 2.2em; color: #2c3e50; margin: 0 0 5px 0; text-transform: uppercase; }
+                        .company-info .tagline { font-size: 0.9em; color: #666; margin-top: 0; margin-bottom: 10px; }
+                        .company-info p { font-size: 0.8em; margin: 2px 0; }
+                        h2 { font-family: 'Montserrat', sans-serif; font-size: 1.2em; color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; }
+                        h3 { font-family: 'Montserrat', sans-serif; font-size: 1em; color: #2c3e50; margin-top: 20px; margin-bottom: 10px; }
+                        .bill-details-section .bill-meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 0.9em; margin-bottom: 20px; }
+                        .bill-details-section .bill-meta-grid div { background-color: #f9f9f9; padding: 8px 12px; border-radius: 4px; }
+                        .customer-vehicle-section { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 0.9em; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+                        .customer-details, .vehicle-details { flex: 1; padding-right: 20px; }
+                        .customer-details p, .vehicle-details p { margin: 5px 0; }
+                        .service-details-section table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; }
+                        .service-details-section th, .service-details-section td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.85em; }
+                        .service-details-section th { background-color: #f2f2f2; font-weight: bold; color: #555; }
+                        .summary-payment-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+                        .summary-grid { display: flex; justify-content: space-between; gap: 30px; margin-bottom: 20px; }
+                        .total-breakdown { flex: 2; }
+                        .total-breakdown h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                        .summary-line { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.9em; border-bottom: 1px dotted #eee; }
+                        .summary-line:last-of-type { border-bottom: none; }
+                        .summary-line.highlighted { font-weight: bold; background-color: #e6f7ff; padding: 8px 5px; margin: 5px -5px; border-radius: 3px; border-bottom: none; }
+                        .summary-line.final-amount { font-size: 1.1em; font-weight: bold; color: #d35400; border-top: 2px solid #2c3e50; padding-top: 10px; margin-top: 10px; }
+                        .payment-info { flex: 1; text-align: right; font-size: 0.85em; }
+                        .payment-info p { margin: 5px 0; }
+                        .qr-code img { max-width: 100px; height: auto; margin-top: 10px; border: 1px solid #ddd; padding: 5px; background-color: #fff; }
+                        .amount-in-words { font-weight: bold; font-style: italic; margin-top: 20px; margin-bottom: 30px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-size: 0.95em; }
+                        .terms-conditions { font-size: 0.8em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+                        .terms-conditions h3 { margin-top: 0; font-size: 0.9em; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+                        .terms-conditions ul { list-style: decimal; padding-left: 20px; margin-top: 10px; }
+                        .terms-conditions li { margin-bottom: 5px; }
+                        .bill-footer { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; text-align: center; font-size: 0.9em; }
+                        .signatures { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 20px; }
+                        .signatures p { flex: 1; text-align: left; }
+                        .signatures p:last-child { text-align: right; }
+                        .thank-you { font-family: 'Montserrat', sans-serif; font-size: 1.1em; font-weight: bold; color: #2c3e50; margin-top: 20px; }
+                        @media print { body { margin: 0; padding: 0; background: none; } .bill-container { box-shadow: none; border: none; margin: 0; width: 100%; min-height: auto; } }
                     </style>
                 </head>
                 <body>
@@ -540,50 +523,45 @@ const BillGenerationModal = ({
     <meta charset="utf-8">
     <title>Service Bill - ${booking.bookingId}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; font-size: 12px; line-height: 1.4; color: #1f2937; }
-        .bill-container { max-width: 800px; margin: 0 auto; background: white; }
-        .header { border-bottom: 2px solid #3b82f6; padding-bottom: 16px; margin-bottom: 20px; }
-        .company-name { font-size: 24px; font-weight: bold; color: #1d4ed8; text-align: center; margin-bottom: 4px; }
-        .company-tagline { color: #374151; font-weight: 500; text-align: center; margin-bottom: 8px; }
-        .company-details { font-size: 10px; color: #4b5563; text-align: center; }
-        .invoice-header { display: flex; justify-content: space-between; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; }
-        .invoice-title { background: #dbeafe; padding: 8px 12px; border-radius: 4px; font-weight: bold; }
-        .details-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
-        .detail-box { border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; }
-        .detail-title { font-weight: 600; margin-bottom: 8px; font-size: 12px; }
-        .detail-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 11px; }
-        .detail-label { color: #4b5563; }
-        .detail-value { font-weight: 500; }
-        .work-description { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; background: #eff6ff; margin: 16px 0; }
-        .parts-section { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; margin: 16px 0; }
-        .parts-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-        .parts-table th, .parts-table td { padding: 6px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 10px; }
-        .parts-table th { background: #f9fafb; font-weight: 600; }
-        .charges-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
-        .charges-box { border: 1px solid #d1d5db; border-radius: 8px; padding: 12px; }
-        .bill-summary { border: 2px solid #10b981; border-radius: 8px; padding: 16px; background: #f0fdf4; margin: 20px 0; }
-        .summary-title { font-weight: bold; text-align: center; margin-bottom: 12px; font-size: 14px; }
-        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 11px; }
-        .summary-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .total-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: bold; background: white; padding: 12px; border-radius: 4px; border: 1px solid #d1d5db; margin-top: 12px; }
-        .total-amount { color: #15803d; }
-        .terms-section { border: 1px solid #d1d5db; border-radius: 8px; padding: 16px; background: #f9fafb; margin: 20px 0; }
-        .terms-title { font-weight: bold; text-align: center; margin-bottom: 12px; font-size: 12px; }
-        .terms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .terms-category { font-weight: 600; margin-bottom: 4px; font-size: 10px; }
-        .terms-list { font-size: 9px; color: #374151; margin-left: 8px; }
-        .certificate { border: 2px solid #3b82f6; border-radius: 8px; padding: 12px; background: #eff6ff; text-align: center; margin: 20px 0; }
-        .certificate-title { font-weight: bold; color: #1e40af; margin-bottom: 4px; font-size: 12px; }
-        .certificate-text { color: #1d4ed8; font-size: 10px; }
-        .signatures { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 32px; margin: 24px 0; }
-        .signature-box { text-align: center; }
-        .signature-line { width: 100%; height: 2px; background: #9ca3af; margin-bottom: 8px; }
-        .signature-label { font-weight: 600; font-size: 10px; }
-        .signature-sublabel { color: #4b5563; font-size: 9px; }
-        .footer { border-top: 2px solid #d1d5db; padding-top: 16px; text-align: center; background: #1d4ed8; color: white; padding: 12px; border-radius: 8px; margin-top: 24px; }
-        .footer-title { font-weight: bold; margin-bottom: 4px; font-size: 12px; }
-        .footer-text { font-size: 10px; margin-bottom: 4px; }
-        @media print { body { margin: 0; padding: 10px; } .bill-container { max-width: none; } }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; color: #333; }
+        .bill-container { width: 210mm; min-height: 297mm; margin: 20px auto; background-color: #fff; border: 1px solid #ddd; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); padding: 30px; box-sizing: border-box; }
+        .bill-header { display: flex; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        .company-logo img { max-width: 80px; height: auto; margin-right: 20px; }
+        .company-info { flex-grow: 1; }
+        .company-info h1 { font-family: 'Montserrat', sans-serif; font-size: 2.2em; color: #2c3e50; margin: 0 0 5px 0; text-transform: uppercase; }
+        .company-info .tagline { font-size: 0.9em; color: #666; margin-top: 0; margin-bottom: 10px; }
+        .company-info p { font-size: 0.8em; margin: 2px 0; }
+        h2 { font-family: 'Montserrat', sans-serif; font-size: 1.2em; color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-top: 25px; margin-bottom: 15px; text-transform: uppercase; }
+        h3 { font-family: 'Montserrat', sans-serif; font-size: 1em; color: #2c3e50; margin-top: 20px; margin-bottom: 10px; }
+        .bill-details-section .bill-meta-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; font-size: 0.9em; margin-bottom: 20px; }
+        .bill-details-section .bill-meta-grid div { background-color: #f9f9f9; padding: 8px 12px; border-radius: 4px; }
+        .customer-vehicle-section { display: flex; justify-content: space-between; margin-bottom: 30px; font-size: 0.9em; border-bottom: 1px solid #eee; padding-bottom: 20px; }
+        .customer-details, .vehicle-details { flex: 1; padding-right: 20px; }
+        .customer-details p, .vehicle-details p { margin: 5px 0; }
+        .service-details-section table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; }
+        .service-details-section th, .service-details-section td { border: 1px solid #ddd; padding: 10px; text-align: left; font-size: 0.85em; }
+        .service-details-section th { background-color: #f2f2f2; font-weight: bold; color: #555; }
+        .summary-payment-section { margin-top: 30px; border-top: 1px solid #eee; padding-top: 20px; }
+        .summary-grid { display: flex; justify-content: space-between; gap: 30px; margin-bottom: 20px; }
+        .total-breakdown { flex: 2; }
+        .total-breakdown h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .summary-line { display: flex; justify-content: space-between; padding: 5px 0; font-size: 0.9em; border-bottom: 1px dotted #eee; }
+        .summary-line:last-of-type { border-bottom: none; }
+        .summary-line.highlighted { font-weight: bold; background-color: #e6f7ff; padding: 8px 5px; margin: 5px -5px; border-radius: 3px; border-bottom: none; }
+        .summary-line.final-amount { font-size: 1.1em; font-weight: bold; color: #d35400; border-top: 2px solid #2c3e50; padding-top: 10px; margin-top: 10px; }
+        .payment-info { flex: 1; text-align: right; font-size: 0.85em; }
+        .payment-info p { margin: 5px 0; }
+        .amount-in-words { font-weight: bold; font-style: italic; margin-top: 20px; margin-bottom: 30px; padding: 10px; background-color: #f9f9f9; border: 1px solid #eee; border-radius: 4px; font-size: 0.95em; }
+        .terms-conditions { font-size: 0.8em; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; }
+        .terms-conditions h3 { margin-top: 0; font-size: 0.9em; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        .terms-conditions ul { list-style: decimal; padding-left: 20px; margin-top: 10px; }
+        .terms-conditions li { margin-bottom: 5px; }
+        .bill-footer { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; text-align: center; font-size: 0.9em; }
+        .signatures { display: flex; justify-content: space-between; margin-bottom: 20px; padding: 0 20px; }
+        .signatures p { flex: 1; text-align: left; }
+        .signatures p:last-child { text-align: right; }
+        .thank-you { font-family: 'Montserrat', sans-serif; font-size: 1.1em; font-weight: bold; color: #2c3e50; margin-top: 20px; }
+        @media print { body { margin: 0; padding: 0; background: none; } .bill-container { box-shadow: none; border: none; margin: 0; width: 100%; min-height: auto; } }
     </style>
 </head>
 <body>
@@ -592,8 +570,8 @@ const BillGenerationModal = ({
             <div class="company-name">VENKATESWARA MOTORS</div>
             <div class="company-tagline">Professional Vehicle Service Center</div>
             <div class="company-details">
-                <div>Address: 123 Service Road, Automotive Hub, City - 560001</div>
-                <div>Phone: +91-9876543210 | Email: service@venkateswaramotors.com</div>
+                <div>Address: 4WF6+9QG, SH 57, Ma. Po. Si. Nagar, Kakkalur, Tamil Nadu 602001</div>
+                <div>Phone: +91-9677464451 | Email: venkateshwaramotors.trl@gmail.com</div>
             </div>
             <div class="invoice-header">
                 <div>
@@ -648,7 +626,6 @@ const BillGenerationModal = ({
                 <div class="detail-title">Additional Services</div>
                 ${billData.waterWash ? `<div class="detail-row"><span class="detail-label">Vehicle Wash & Clean:</span><span class="detail-value">₹${billData.waterWashCharges.toFixed(2)}</span></div>` : ''}
                 <div class="detail-row"><span class="detail-label">Discount (${billData.discount}%):</span><span class="detail-value" style="color: #dc2626;">-₹${totals.discountAmount.toFixed(2)}</span></div>
-                <div class="detail-row"><span class="detail-label">GST (${billData.taxRate}%):</span><span class="detail-value">₹${totals.taxAmount.toFixed(2)}</span></div>
                 <div class="detail-row"><span class="detail-label">Payment Status:</span><span class="detail-value">${billData.paymentStatus}</span></div>
             </div>
         </div>
@@ -667,8 +644,6 @@ const BillGenerationModal = ({
                 </div>
             </div>
             ${billData.discount > 0 ? `<div class="summary-row" style="color: #dc2626; margin-top: 8px;"><span>Discount (${billData.discount}%):</span><span>-₹${totals.discountAmount.toFixed(2)}</span></div>` : ''}
-            <div class="summary-row" style="margin-top: 4px;"><span>After Discount:</span><span>₹${totals.afterDiscount.toFixed(2)}</span></div>
-            <div class="summary-row"><span>GST (${billData.taxRate}%):</span><span>₹${totals.taxAmount.toFixed(2)}</span></div>
             <div class="total-row"><span>TOTAL AMOUNT:</span><span class="total-amount">₹${totals.total.toFixed(2)}</span></div>
             <div style="text-align: center; margin-top: 8px; font-size: 10px; color: #4b5563;">
                 Amount in words: <span style="font-weight: 500; text-transform: capitalize;">Rupees ${Math.floor(totals.total)} and ${Math.round((totals.total % 1) * 100)} Paise Only</span>
@@ -742,25 +717,25 @@ const BillGenerationModal = ({
           }
         }
       `}</style>
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[85vh] overflow-y-auto print:shadow-none print:max-h-none print:overflow-visible print:max-w-none print:w-auto">
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
+                <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[95vh] sm:max-h-[85vh] overflow-y-auto print:shadow-none print:max-h-none print:overflow-visible print:max-w-none print:w-auto">
                     {/* Modal Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 print:hidden">
-                        <div className="flex items-center space-x-2">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${mode === 'edit'
+                    <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200 print:hidden">
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                            <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center flex-shrink-0 ${mode === 'edit'
                                 ? 'bg-blue-100'
                                 : 'bg-green-100'
                                 }`}>
-                                <FileText className={`h-4 w-4 ${mode === 'edit'
+                                <FileText className={`h-3 w-3 sm:h-4 sm:w-4 ${mode === 'edit'
                                     ? 'text-blue-600'
                                     : 'text-green-600'
                                     }`} />
                             </div>
-                            <div>
-                                <h3 className="text-lg font-semibold text-gray-900">
+                            <div className="min-w-0 flex-1">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                                     {mode === 'edit' ? 'Edit Bill' : 'Generate Bill'}
                                 </h3>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 truncate">
                                     Booking ID: {booking.bookingId}
                                     {mode === 'edit' && existingBill && (
                                         <span className="ml-2 text-blue-600">
@@ -774,14 +749,14 @@ const BillGenerationModal = ({
                             variant="outline"
                             size="sm"
                             onClick={onClose}
-                            className="h-8 w-8 p-0 border-gray-300"
+                            className="h-8 w-8 p-0 border-gray-300 flex-shrink-0 ml-2"
                         >
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
 
                     {/* Bill Content */}
-                    <div className="relative p-4 space-y-4">
+                    <div className="relative p-3 sm:p-4 space-y-3 sm:space-y-4">
                         {/* Loading Overlay */}
                         {loadingBill && (
                             <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-10">
@@ -792,33 +767,33 @@ const BillGenerationModal = ({
                             </div>
                         )}
                         {/* Company Header */}
-                        <div className="border-b-2 border-blue-200 pb-4">
-                            <div className="text-center mb-3">
-                                <h1 className="text-2xl font-bold text-blue-700">VENKATESWARA MOTORS</h1>
-                                <p className="text-gray-700 font-medium">Professional Vehicle Service Center</p>
+                        <div className="border-b-2 border-blue-200 pb-3 sm:pb-4">
+                            <div className="text-center mb-2 sm:mb-3">
+                                <h1 className="text-lg sm:text-2xl font-bold text-blue-700">VENKATESWARA MOTORS</h1>
+                                <p className="text-sm sm:text-base text-gray-700 font-medium">Professional Vehicle Service Center</p>
                                 <div className="text-xs text-gray-600 mt-1">
-                                    <p>Address: 123 Service Road, Automotive Hub, City - 560001</p>
-                                    <p>Phone: +91-9876543210 | Email: service@venkateswaramotors.com</p>
+                                    <p>Address: 4WF6+9QG, SH 57, Ma. Po. Si. Nagar, Kakkalur, Tamil Nadu 602001</p>
+                                    <p>Phone: +91-9677464451 | Email: venkateshwaramotors.trl@gmail.com</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 mt-4 pt-3 border-t border-gray-200">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-200">
                                 <div className="text-left">
                                     <p className="text-sm font-bold text-gray-800">
-                                        Invoice No: VM-{new Date().getFullYear()}-{booking.bookingId.toString().padStart(4, '0')}
+                                        Bill No: VM-{new Date().getFullYear()}-{booking.bookingId.toString().padStart(4, '0')}
                                     </p>
                                     <p className="text-xs text-gray-600">Date: {new Date().toLocaleDateString('en-IN')}</p>
                                     <p className="text-xs text-gray-600">Time: {new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
                                 </div>
-                                <div className="text-right">
-                                    <h2 className="text-lg font-bold text-gray-900 bg-blue-100 px-3 py-1 rounded">SERVICE INVOICE</h2>
+                                <div className="text-left sm:text-right mt-2 sm:mt-0">
+                                    <h2 className="text-sm sm:text-lg font-bold text-gray-900 bg-blue-100 px-2 sm:px-3 py-1 rounded inline-block">SERVICE BILL</h2>
                                     <p className="text-xs text-green-600 font-medium mt-1">✓ Authorized Service Center</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Customer & Service Details */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {/* Customer Details */}
                             <div className="border border-gray-200 rounded-lg p-3">
                                 <h3 className="text-sm font-semibold text-gray-900 mb-2">Customer Details</h3>
@@ -868,16 +843,16 @@ const BillGenerationModal = ({
 
                         {/* Work Description */}
                         <div className="border border-gray-300 rounded-lg p-3 bg-blue-50">
-                            <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                                <Wrench className="h-4 w-4 mr-2 text-blue-600" />
-                                Service Work Description
+                            <h3 className="text-sm font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
+                                <Wrench className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-blue-600 flex-shrink-0" />
+                                <span className="truncate">Service Work Description</span>
                             </h3>
                             <div>
                                 <label className="block text-xs font-medium text-gray-700 mb-1">Work Performed</label>
                                 <textarea
                                     value={billData.workDescription}
                                     onChange={(e) => setBillData(prev => ({ ...prev, workDescription: e.target.value }))}
-                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none"
                                     rows="3"
                                     placeholder="Describe the work performed..."
                                 />
@@ -886,16 +861,16 @@ const BillGenerationModal = ({
 
                         {/* Parts Replaced Section */}
                         <div className="border border-gray-300 rounded-lg p-3">
-                            <div className="flex items-center justify-between mb-3">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0 mb-3">
                                 <h3 className="text-sm font-semibold text-gray-900 flex items-center">
-                                    <Wrench className="h-4 w-4 mr-2 text-orange-600" />
-                                    Parts Replaced / Consumables Used
+                                    <Wrench className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-orange-600 flex-shrink-0" />
+                                    <span className="truncate">Parts Replaced / Consumables Used</span>
                                 </h3>
                                 <Button
                                     type="button"
                                     size="sm"
                                     onClick={addPart}
-                                    className="bg-green-600 hover:bg-green-700 text-white h-6 px-2"
+                                    className="bg-green-600 hover:bg-green-700 text-white h-6 px-2 text-xs sm:text-sm self-start sm:self-auto"
                                 >
                                     <Plus className="h-3 w-3 mr-1" />
                                     Add Part
@@ -903,72 +878,81 @@ const BillGenerationModal = ({
                             </div>
 
                             {billData.parts.length > 0 ? (
-                                <div className="space-y-2">
-                                    <div className="grid grid-cols-12 gap-2 text-xs font-medium text-gray-700 border-b pb-1">
-                                        <div className="col-span-4">Part Name</div>
-                                        <div className="col-span-2">Qty</div>
-                                        <div className="col-span-2">Unit Price (₹)</div>
-                                        <div className="col-span-2">Total (₹)</div>
-                                        <div className="col-span-2">Action</div>
-                                    </div>
-                                    {billData.parts.map((part) => (
-                                        <div key={part.id} className="grid grid-cols-12 gap-2 items-center">
-                                            <div className="col-span-4">
-                                                <input
-                                                    type="text"
-                                                    value={part.name}
-                                                    onChange={(e) => updatePart(part.id, 'name', e.target.value)}
-                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    placeholder="Part name"
-                                                />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <input
-                                                    type="number"
-                                                    value={part.quantity || ''}
-                                                    onChange={(e) => {
-                                                        const cleanValue = e.target.value.replace(/^0+/, '') || '0';
-                                                        const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
-                                                        updatePart(part.id, 'quantity', numericValue);
-                                                    }}
-                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    min="0"
-                                                    step="1"
-                                                />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <input
-                                                    type="number"
-                                                    value={part.unitPrice || ''}
-                                                    onChange={(e) => {
-                                                        const cleanValue = e.target.value.replace(/^0+/, '') || '0';
-                                                        const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
-                                                        updatePart(part.id, 'unitPrice', numericValue);
-                                                    }}
-                                                    className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                    min="0"
-                                                    step="0.01"
-                                                />
-                                            </div>
-                                            <div className="col-span-2">
-                                                <span className="text-xs font-medium">₹{part.total.toFixed(2)}</span>
-                                            </div>
-                                            <div className="col-span-2">
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => removePart(part.id)}
-                                                    className="h-6 w-6 p-0 border-red-300 text-red-600 hover:bg-red-50"
-                                                >
-                                                    <Trash2 className="h-3 w-3" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    <div className="border-t pt-2 text-right">
-                                        <span className="text-sm font-semibold">Parts Total: ₹{calculatePartsTotal().toFixed(2)}</span>
-                                    </div>
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-[600px] w-full text-xs">
+                                        <thead>
+                                            <tr className="text-gray-700 border-b">
+                                                <th className="text-left font-medium pb-1 pr-2">Part Name</th>
+                                                <th className="text-left font-medium pb-1 pr-2">Qty</th>
+                                                <th className="text-left font-medium pb-1 pr-2">Unit Price (₹)</th>
+                                                <th className="text-left font-medium pb-1 pr-2">Total (₹)</th>
+                                                <th className="text-left font-medium pb-1">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {billData.parts.map((part) => (
+                                                <tr key={part.id} className="align-middle">
+                                                    <td className="py-1 pr-2">
+                                                        <input
+                                                            type="text"
+                                                            value={part.name}
+                                                            onChange={(e) => updatePart(part.id, 'name', e.target.value)}
+                                                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                            placeholder="Part name"
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 pr-2">
+                                                        <input
+                                                            type="number"
+                                                            value={part.quantity || ''}
+                                                            onChange={(e) => {
+                                                                const cleanValue = e.target.value.replace(/^0+/, '') || '0';
+                                                                const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
+                                                                updatePart(part.id, 'quantity', numericValue);
+                                                            }}
+                                                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                            min="0"
+                                                            step="1"
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 pr-2">
+                                                        <input
+                                                            type="number"
+                                                            value={part.unitPrice || ''}
+                                                            onChange={(e) => {
+                                                                const cleanValue = e.target.value.replace(/^0+/, '') || '0';
+                                                                const numericValue = cleanValue === '' ? 0 : parseFloat(cleanValue) || 0;
+                                                                updatePart(part.id, 'unitPrice', numericValue);
+                                                            }}
+                                                            className="w-full px-2 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                                            min="0"
+                                                            step="0.01"
+                                                        />
+                                                    </td>
+                                                    <td className="py-1 pr-2">
+                                                        <span className="text-xs font-medium">₹{part.total.toFixed(2)}</span>
+                                                    </td>
+                                                    <td className="py-1">
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => removePart(part.id)}
+                                                            className="h-6 w-6 p-0 border-red-300 text-red-600 hover:bg-red-50"
+                                                        >
+                                                            <Trash2 className="h-3 w-3" />
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td className="pt-2 text-right font-semibold" colSpan={4}>Parts Total:</td>
+                                                <td className="pt-2 font-semibold">₹{calculatePartsTotal().toFixed(2)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
                                 </div>
                             ) : (
                                 <p className="text-xs text-gray-500 text-center py-4">No parts added. Click "Add Part" to add parts.</p>
@@ -976,12 +960,12 @@ const BillGenerationModal = ({
                         </div>
 
                         {/* Service Charges & Additional Services */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
                             {/* Service Charges */}
                             <div className="border border-gray-300 rounded-lg p-3">
-                                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                                    <Calculator className="h-4 w-4 mr-2 text-blue-600" />
-                                    Service Charges
+                                <h3 className="text-sm font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
+                                    <Calculator className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-blue-600 flex-shrink-0" />
+                                    <span className="truncate">Service Charges</span>
                                 </h3>
                                 <div className="space-y-2">
                                     <div>
@@ -1022,18 +1006,18 @@ const BillGenerationModal = ({
 
                             {/* Additional Services */}
                             <div className="border border-gray-300 rounded-lg p-3">
-                                <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
-                                    <Droplets className="h-4 w-4 mr-2 text-blue-600" />
-                                    Additional Services
+                                <h3 className="text-sm font-semibold text-gray-900 mb-2 sm:mb-3 flex items-center">
+                                    <Droplets className="h-3 w-3 sm:h-4 sm:w-4 mr-2 text-blue-600 flex-shrink-0" />
+                                    <span className="truncate">Additional Services</span>
                                 </h3>
                                 <div className="space-y-3">
-                                    <div className="flex items-center justify-between p-2 bg-blue-50 rounded">
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-2 bg-blue-50 rounded">
                                         <div className="flex items-center">
                                             <input
                                                 type="checkbox"
                                                 checked={billData.waterWash}
                                                 onChange={(e) => setBillData(prev => ({ ...prev, waterWash: e.target.checked }))}
-                                                className="mr-2"
+                                                className="mr-2 flex-shrink-0"
                                             />
                                             <span className="text-sm font-medium">Vehicle Wash & Clean</span>
                                         </div>
@@ -1050,31 +1034,17 @@ const BillGenerationModal = ({
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
-                                            <input
-                                                type="number"
-                                                value={billData.discount || ''}
-                                                onChange={(e) => handleNumberInputChange('discount', e.target.value)}
-                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                min="0"
-                                                max="100"
-                                                step="0.01"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-medium text-gray-700 mb-1">GST Rate (%)</label>
-                                            <input
-                                                type="number"
-                                                value={billData.taxRate || ''}
-                                                onChange={(e) => handleNumberInputChange('taxRate', e.target.value)}
-                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                                                min="0"
-                                                max="100"
-                                                step="0.01"
-                                            />
-                                        </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">Discount (%)</label>
+                                        <input
+                                            type="number"
+                                            value={billData.discount || ''}
+                                            onChange={(e) => handleNumberInputChange('discount', e.target.value)}
+                                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                            min="0"
+                                            max="100"
+                                            step="0.01"
+                                        />
                                     </div>
 
                                     <div>
@@ -1093,13 +1063,13 @@ const BillGenerationModal = ({
                         </div>
 
                         {/* Professional Bill Summary */}
-                        <div className="border-2 border-green-200 rounded-lg p-4 bg-green-50">
-                            <h3 className="text-base font-bold text-gray-900 mb-3 text-center">BILL SUMMARY</h3>
+                        <div className="border-2 border-green-200 rounded-lg p-3 sm:p-4 bg-green-50">
+                            <h3 className="text-sm sm:text-base font-bold text-gray-900 mb-2 sm:mb-3 text-center">BILL SUMMARY</h3>
                             {(() => {
                                 const totals = calculateBillTotals();
                                 return (
                                     <div className="space-y-2">
-                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                                             <div className="space-y-1">
                                                 <div className="flex justify-between">
                                                     <span>Service Charges:</span>
@@ -1141,19 +1111,11 @@ const BillGenerationModal = ({
                                                     <span>-₹{totals.discountAmount.toFixed(2)}</span>
                                                 </div>
                                             )}
-                                            <div className="flex justify-between">
-                                                <span>After Discount:</span>
-                                                <span>₹{totals.afterDiscount.toFixed(2)}</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>GST ({billData.taxRate}%):</span>
-                                                <span>₹{totals.taxAmount.toFixed(2)}</span>
-                                            </div>
                                         </div>
 
                                         <Separator className="my-3" />
 
-                                        <div className="flex justify-between text-lg font-bold bg-white p-3 rounded border">
+                                        <div className="flex justify-between text-base sm:text-lg font-bold bg-white p-2 sm:p-3 rounded border">
                                             <span>TOTAL AMOUNT:</span>
                                             <span className="text-green-700">₹{totals.total.toFixed(2)}</span>
                                         </div>
@@ -1172,7 +1134,7 @@ const BillGenerationModal = ({
                         </div>
 
                         {/* Notes Section */}
-                        <div className="border border-gray-300 rounded-lg p-3">
+                        {/* <div className="border border-gray-300 rounded-lg p-3">
                             <label className="block text-sm font-medium text-gray-700 mb-2">Additional Notes / Comments</label>
                             <textarea
                                 value={billData.notes}
@@ -1181,12 +1143,12 @@ const BillGenerationModal = ({
                                 rows="3"
                                 placeholder="Add any warranty information, special instructions, or additional notes for the customer..."
                             />
-                        </div>
+                        </div> */}
 
                         {/* Professional Terms and Conditions */}
-                        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
-                            <h4 className="text-sm font-bold text-gray-900 mb-3 text-center">TERMS & CONDITIONS</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-gray-700">
+                        <div className="border border-gray-300 rounded-lg p-3 sm:p-4 bg-gray-50">
+                            <h4 className="text-sm font-bold text-gray-900 mb-2 sm:mb-3 text-center">TERMS & CONDITIONS</h4>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 text-xs text-gray-700">
                                 <div>
                                     <h5 className="font-semibold mb-1">Service Warranty:</h5>
                                     <ul className="space-y-0.5 ml-2">
@@ -1223,10 +1185,10 @@ const BillGenerationModal = ({
                         </div>
 
                         {/* Professional Footer - Print Optimized */}
-                        <div className="mt-6 print:mt-8">
+                        <div className="mt-4 sm:mt-6 print:mt-8">
                             {/* Service Completion Certificate */}
-                            <div className="border-2 border-blue-300 rounded-lg p-3 bg-blue-50 text-center">
-                                <h4 className="text-sm font-bold text-blue-800 mb-1">SERVICE COMPLETION CERTIFICATE</h4>
+                            <div className="border-2 border-blue-300 rounded-lg p-2 sm:p-3 bg-blue-50 text-center">
+                                <h4 className="text-xs sm:text-sm font-bold text-blue-800 mb-1">SERVICE COMPLETION CERTIFICATE</h4>
                                 <p className="text-xs text-blue-700">
                                     This is to certify that the above mentioned vehicle has been serviced as per the
                                     customer's requirement and is ready for delivery in good condition.
@@ -1235,10 +1197,10 @@ const BillGenerationModal = ({
 
 
                             {/* Professional Footer */}
-                            <div className="mt-6 pt-4 border-t-2 border-gray-300 text-center print:mt-8">
-                                <div className="bg-blue-700 text-white p-3 rounded-lg print:bg-gray-800">
-                                    <h4 className="font-bold mb-1">Thank You for Choosing Venkateswara Motors!</h4>
-                                    <p className="text-xs">
+                            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t-2 border-gray-300 text-center print:mt-8">
+                                <div className="bg-blue-700 text-white p-2 sm:p-3 rounded-lg print:bg-gray-800">
+                                    <h4 className="text-sm sm:text-base font-bold mb-1">Thank You for Choosing Venkateswara Motors!</h4>
+                                    {/* <p className="text-xs">
                                         Your satisfaction is our priority. For any service-related queries,
                                         please contact us at +91-9876543210 or visit our service center.
                                     </p>
@@ -1248,14 +1210,14 @@ const BillGenerationModal = ({
                                             nextDate.setMonth(nextDate.getMonth() + 3);
                                             return nextDate.toLocaleDateString('en-IN');
                                         })()} | Follow us on social media for service reminders
-                                    </p>
+                                    </p> */}
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Modal Footer */}
-                    <div className="flex items-center justify-end space-x-2 p-3 border-t border-gray-200 bg-gray-50 print:hidden">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-0 sm:space-x-2 p-3 border-t border-gray-200 bg-gray-50 print:hidden">
                         <Button
                             variant="outline"
                             size="sm"

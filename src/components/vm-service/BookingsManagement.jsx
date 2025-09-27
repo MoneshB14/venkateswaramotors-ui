@@ -28,7 +28,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
-import { useGlobal } from '../../contexts/GlobalContext';
+import { useGlobal } from '../../hooks/useGlobal';
 import { bookingsAPI, billGenerationAPI } from '../../services/api';
 import { bookingStatuses, serviceTypes } from '../../config/menuConfig';
 import { useToast } from '../../hooks/useToast';

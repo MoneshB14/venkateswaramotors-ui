@@ -4,6 +4,7 @@ import { AuthProvider } from './hooks/useAuth.jsx';
 import ProtectedRoute from './components/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
 import { GlobalProvider } from './contexts/GlobalContext';
+import { LoadingProvider } from './contexts/LoadingContext';
 
 // VM Service Components
 import ServiceHome from './pages/vm-service/ServiceHome';
@@ -19,8 +20,9 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <GlobalProvider>
-          <Router>
+        <LoadingProvider>
+          <GlobalProvider>
+            <Router>
             <div className="App">
               <Routes>
                               {/* VM Service Routes */}
@@ -58,7 +60,8 @@ function App() {
               }}
             />
           </Router>
-        </GlobalProvider>
+          </GlobalProvider>
+        </LoadingProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

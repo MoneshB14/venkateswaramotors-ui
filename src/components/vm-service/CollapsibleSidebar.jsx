@@ -9,6 +9,7 @@ import {
   SidebarNavLink
 } from '../ui/sidebar';
 import { Button } from '../ui/button';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { menuItems } from '../../config/menuConfig';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -18,15 +19,14 @@ const CollapsibleSidebar = ({
   user,
   isOpen,
   onClose,
-  isCollapsed: externalIsCollapsed,
-  onCollapseToggle: externalOnCollapseToggle
+  isCollapsed: externalIsCollapsed
 }) => {
   const { canAccessUsers } = useAuth();
-  const [internalIsCollapsed, setInternalIsCollapsed] = useState(false);
-  
+  const [internalIsCollapsed] = useState(false);
+
   // Use external state if provided, otherwise use internal state
   const isCollapsed = externalIsCollapsed !== undefined ? externalIsCollapsed : internalIsCollapsed;
-  const toggleCollapse = externalOnCollapseToggle || (() => setInternalIsCollapsed(!internalIsCollapsed));
+  void user; // mark as used to satisfy linter when not needed here
 
   // Filter menu items based on user role
   const getFilteredMenuItems = () => {
@@ -40,21 +40,20 @@ const CollapsibleSidebar = ({
     });
   };
 
-  // Group menu items by category with role-based filtering
+  // Group menu items by task-based categories
+  const operationsItems = getFilteredMenuItems().filter(item => ['overview', 'bookings', 'customers', 'inventory'].includes(item.id));
+  const adminItems = getFilteredMenuItems().filter(item => ['users'].includes(item.id));
+
   const menuGroups = [
-    {
-      title: 'Core',
-      items: getFilteredMenuItems().filter(item => ['overview', 'bookings', 'customers'].includes(item.id))
-    },
-    {
-      title: 'Management',
-      items: getFilteredMenuItems().filter(item => ['inventory'].includes(item.id))
-    },
-    {
-      title: 'System',
-      items: getFilteredMenuItems().filter(item => ['users'].includes(item.id))
-    }
-  ].filter(group => group.items.length > 0); // Only show groups that have items
+    { title: 'Operations', items: operationsItems },
+    { title: 'Administration', items: adminItems }
+  ].filter(group => group.items.length > 0);
+
+  // Collapsible state per group
+  const [collapsedGroups, setCollapsedGroups] = useState({});
+  const toggleGroup = (title) => {
+    setCollapsedGroups(prev => ({ ...prev, [title]: !prev[title] }));
+  };
 
   return (
     <>
@@ -77,19 +76,32 @@ const CollapsibleSidebar = ({
           <SidebarNav className="px-2 py-3">
             {menuGroups.map((group, groupIndex) => (
               <div key={group.title}>
-                {/* Section Header */}
+                {/* Collapsible Group Header */}
                 {!isCollapsed && (
-                  <div className="px-3 py-2 mb-2">
-                    <h3 className="text-xs font-bold text-gray-600 uppercase tracking-wider bg-gray-100 px-2 py-1 rounded-md">
-                      {group.title}
-                    </h3>
+                  <div className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleGroup(group.title)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-[0.7rem] font-semibold text-gray-800 uppercase tracking-wider bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                      aria-expanded={!collapsedGroups[group.title]}
+                      aria-controls={`group-${groupIndex}`}
+                    >
+                      <span className="font-semibold">{group.title}</span>
+                      {collapsedGroups[group.title] ? (
+                        <ChevronRight className="h-4 w-4 text-gray-600" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4 text-gray-600" />
+                      )}
+                    </button>
+                    <div className="mx-2 mt-1 border-b border-gray-200/80"></div>
                   </div>
                 )}
-                
+
                 {/* Menu Items */}
-                {group.items.map((item) => {
+                {!collapsedGroups[group.title] && group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeMenu === item.id;
+                  const isUsers = item.id === 'users';
                   return (
                     <SidebarNavItem key={item.id}>
                       <SidebarNavLink
@@ -101,21 +113,27 @@ const CollapsibleSidebar = ({
                         }}
                         className={`
                           group rounded-lg transition-all duration-200 ease-in-out relative overflow-hidden mb-1
-                          ${isCollapsed ? 'justify-center px-2 py-2.5' : 'px-3 py-2.5'}
+                          ${isCollapsed ? 'justify-center px-2 py-2.5' : 'pl-2 pr-3 py-2.5'}
                           ${isActive
-                            ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600'
+                            ? 'bg-blue-50 text-blue-800 border-l-4 border-blue-600 shadow-sm'
                             : 'hover:bg-gray-50 hover:text-gray-900 hover:border-l-2 hover:border-gray-300'
                           }
                         `}
                         title={isCollapsed ? item.title : undefined}
+                        aria-label={item.title}
                       >
-                        <Icon className={`h-5 w-5 flex-shrink-0 transition-all duration-200 relative z-10 ${
-                          isActive ? 'text-blue-600' : 'text-gray-500 group-hover:text-gray-700'
-                        }`} />
+                        {/* Active accent strip for stronger highlight */}
                         {!isCollapsed && (
-                          <span className={`font-medium text-sm transition-all duration-200 relative z-10 ml-3 ${
-                            isActive ? 'text-blue-700 font-semibold' : 'text-gray-700 group-hover:text-gray-900'
-                          }`}>
+                          <span className={`absolute left-0 top-0 h-full ${isActive ? 'w-1 bg-gradient-to-b from-blue-600 to-blue-500' : 'w-0'} rounded-r`}></span>
+                        )}
+                        <Icon className={`${isActive ? 'h-5 w-5 text-blue-700' : 'h-4.5 w-4.5 text-gray-500 opacity-70 group-hover:opacity-90 group-hover:text-gray-700'} flex-shrink-0 transition-all duration-200 relative z-10`} />
+                        {!isCollapsed && (
+                          <span className={`${isActive
+                            ? 'text-blue-800 font-semibold'
+                            : isUsers
+                              ? 'text-gray-500 group-hover:text-gray-700'
+                              : 'text-gray-700 group-hover:text-gray-900'
+                            } font-medium transition-all duration-200 relative z-10 ml-3 ${isUsers ? 'text-sm' : 'text-[0.95rem]'} }`}>
                             {item.title}
                           </span>
                         )}
@@ -123,7 +141,7 @@ const CollapsibleSidebar = ({
                     </SidebarNavItem>
                   );
                 })}
-                
+
                 {/* Add separator between groups (except for last group) */}
                 {groupIndex < menuGroups.length - 1 && !isCollapsed && (
                   <div className="my-3 mx-3 border-t border-gray-200"></div>
@@ -136,8 +154,9 @@ const CollapsibleSidebar = ({
         <SidebarFooter className="px-2 py-3 border-t border-gray-200 bg-gray-50">
           <div className="text-center">
             {!isCollapsed && (
-              <div className="text-xs text-gray-500 font-medium">
-                Venkateswara Motors
+              <div className="flex items-center justify-center gap-2">
+                <span className="inline-block h-2 w-2 rounded-full bg-gradient-to-b from-blue-600 to-blue-500"></span>
+                <span className="text-xs text-gray-600 font-semibold tracking-wide">Venkateswara Motors</span>
               </div>
             )}
           </div>

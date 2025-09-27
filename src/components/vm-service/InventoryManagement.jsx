@@ -23,7 +23,7 @@ import {
   DollarSign,
   Hash
 } from 'lucide-react';
-import { useGlobal } from '../../contexts/GlobalContext';
+import { useGlobal } from '../../hooks/useGlobal';
 import { useAuth } from '../../hooks/useAuth';
 import { inventoryAPI } from '../../services/api';
 

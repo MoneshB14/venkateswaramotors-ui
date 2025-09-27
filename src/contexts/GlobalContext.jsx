@@ -1,19 +1,21 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { useToast } from '../hooks/useToast';
 import ConfirmationDialog from '../components/ui/ConfirmationDialog';
+import { useLoading } from '../hooks/useLoading';
 
-const GlobalContext = createContext();
-
-export const useGlobal = () => {
-  const context = useContext(GlobalContext);
-  if (!context) {
-    throw new Error('useGlobal must be used within a GlobalProvider');
-  }
-  return context;
-};
+export const GlobalContext = createContext();
 
 export const GlobalProvider = ({ children }) => {
   const { toast } = useToast();
+  const { 
+    showGlobalLoading, 
+    hideGlobalLoading, 
+    withGlobalLoading,
+    showLoading,
+    hideLoading,
+    isLoading,
+    withLoading
+  } = useLoading();
   const [confirmationDialog, setConfirmationDialog] = useState({
     isOpen: false,
     title: '',
@@ -255,6 +257,15 @@ export const GlobalProvider = ({ children }) => {
     showError,
     showInfo,
     showWarning,
+    
+    // Loading functions
+    showGlobalLoading,
+    hideGlobalLoading,
+    withGlobalLoading,
+    showLoading,
+    hideLoading,
+    isLoading,
+    withLoading,
     
     // Confirmation dialog functions
     showConfirmation,

@@ -31,7 +31,7 @@ import {
   UserX,
   Crown
 } from 'lucide-react';
-import { useGlobal } from '../../contexts/GlobalContext';
+import { useGlobal } from '../../hooks/useGlobal';
 import { userManagementAPI } from '../../services/api';
 import { useAuth } from '../../hooks/useAuth';
 

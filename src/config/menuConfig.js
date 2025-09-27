@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard,
+  Gauge,
   Users,
   Calendar,
   UserPlus,
@@ -11,7 +11,7 @@ export const menuItems = [
   {
     id: 'overview',
     title: 'Overview',
-    icon: LayoutDashboard,
+    icon: Gauge,
     href: '/dashboard',
     description: 'Dashboard overview and analytics'
   },

@@ -23,7 +23,7 @@ import {
   CheckCircle,
   X
 } from 'lucide-react';
-import { useGlobal } from '../../contexts/GlobalContext';
+import { useGlobal } from '../../hooks/useGlobal';
 import { customersAPI } from '../../services/api';
 import CustomerHistoryModal from './CustomerHistoryModal';
 import { useToast } from '../../hooks/useToast';

@@ -39,7 +39,7 @@ import {
   QrCode,
   Barcode
 } from 'lucide-react';
-import { useGlobal } from '../../contexts/GlobalContext';
+import { useGlobal } from '../../hooks/useGlobal';
 import { useAuth } from '../../hooks/useAuth';
 import { inventoryAPI, suppliersAPI } from '../../services/api';
 import { InventoryItemForm, SupplierForm, StockAdjustmentForm } from './InventoryForms';

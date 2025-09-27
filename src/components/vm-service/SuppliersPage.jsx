@@ -13,7 +13,7 @@ import {
   Star,
   FileText
 } from 'lucide-react';
-import { useGlobal } from '../../contexts/GlobalContext';
+import { useGlobal } from '../../hooks/useGlobal';
 import { useAuth } from '../../hooks/useAuth';
 import { suppliersAPI } from '../../services/api';
 import { SupplierForm } from './InventoryForms';
