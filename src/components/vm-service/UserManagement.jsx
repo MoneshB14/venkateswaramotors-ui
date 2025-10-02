@@ -349,14 +349,14 @@ const UserManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6 p-4 md:p-0">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage system users and their permissions</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">User Management</h1>
+          <p className="text-sm md:text-base text-gray-600 mt-1">Manage system users and their permissions</p>
         </div>
-        <Button onClick={() => setShowUserForm(true)} className="flex items-center gap-2">
+        <Button onClick={() => setShowUserForm(true)} className="flex items-center gap-2 w-full sm:w-auto">
           <Plus className="w-4 h-4" />
           Add User
         </Button>
@@ -428,24 +428,24 @@ const UserManagement = () => {
       {/* Filters */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-1 sm:flex-initial"
               >
                 <Filter className="w-4 h-4" />
                 Filters
                 {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </Button>
               {Object.values(filters).some(value => value !== '' && value !== 0) && (
-                <Button variant="ghost" onClick={clearFilters} className="text-red-600 hover:text-red-700">
+                <Button variant="ghost" onClick={clearFilters} className="text-red-600 hover:text-red-700 text-sm">
                   Clear Filters
                 </Button>
               )}
             </div>
-            <Button variant="outline" onClick={fetchUsers} className="flex items-center gap-2">
+            <Button variant="outline" onClick={fetchUsers} className="flex items-center gap-2 w-full sm:w-auto">
               <RefreshCw className="w-4 h-4" />
               Refresh
             </Button>
@@ -527,9 +527,9 @@ const UserManagement = () => {
           ) : (
             <div className="space-y-4">
               {users.map((user) => (
-                <div key={user.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
+                <div key={user.id} className="border rounded-lg p-3 md:p-4 hover:bg-gray-50 transition-colors">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                    <div className="flex items-start sm:items-center space-x-3 sm:space-x-4 flex-1 min-w-0">
                       <div className="flex-shrink-0">
                         <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                           <User className="w-5 h-5 text-blue-600" />
@@ -537,7 +537,7 @@ const UserManagement = () => {
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center space-x-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <p className="text-sm font-medium text-gray-900 truncate">
                             {user.firstName} {user.lastName}
                           </p>
@@ -545,18 +545,18 @@ const UserManagement = () => {
                           {getStatusBadge(user)}
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center">
-                            <Mail className="w-4 h-4 mr-1" />
-                            {user.email}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-gray-500">
+                          <div className="flex items-center truncate">
+                            <Mail className="w-4 h-4 mr-1 flex-shrink-0" />
+                            <span className="truncate">{user.email}</span>
                           </div>
                           <div className="flex items-center">
-                            <Phone className="w-4 h-4 mr-1" />
+                            <Phone className="w-4 h-4 mr-1 flex-shrink-0" />
                             {user.phoneNumber}
                           </div>
                           {user.city && (
                             <div className="flex items-center">
-                              <MapPin className="w-4 h-4 mr-1" />
+                              <MapPin className="w-4 h-4 mr-1 flex-shrink-0" />
                               {user.city}, {user.state}
                             </div>
                           )}
@@ -569,59 +569,59 @@ const UserManagement = () => {
                       </div>
                     </div>
                     
-                    <div className="flex items-center space-x-2">
+                    <div className="flex flex-wrap gap-2 lg:flex-nowrap lg:items-center">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleViewUser(user)}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 flex-1 sm:flex-initial"
                       >
                         <Eye className="w-3 h-3" />
-                        View
+                        <span className="hidden sm:inline">View</span>
                       </Button>
                       
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleEditUser(user)}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 flex-1 sm:flex-initial"
                       >
                         <Edit className="w-3 h-3" />
-                        Edit
+                        <span className="hidden sm:inline">Edit</span>
                       </Button>
                       
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleStatus(user.id, !user.enabled)}
-                        className={`flex items-center gap-1 ${
+                        className={`flex items-center gap-1 flex-1 sm:flex-initial ${
                           user.enabled ? 'text-orange-600 hover:text-orange-700' : 'text-green-600 hover:text-green-700'
                         }`}
                       >
                         {user.enabled ? <ShieldX className="w-3 h-3" /> : <ShieldCheck className="w-3 h-3" />}
-                        {user.enabled ? 'Disable' : 'Enable'}
+                        <span className="hidden sm:inline">{user.enabled ? 'Disable' : 'Enable'}</span>
                       </Button>
                       
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleLock(user.id, user.accountNonLocked)}
-                        className={`flex items-center gap-1 ${
+                        className={`flex items-center gap-1 flex-1 sm:flex-initial ${
                           user.accountNonLocked ? 'text-orange-600 hover:text-orange-700' : 'text-green-600 hover:text-green-700'
                         }`}
                       >
                         {user.accountNonLocked ? <Lock className="w-3 h-3" /> : <Unlock className="w-3 h-3" />}
-                        {user.accountNonLocked ? 'Lock' : 'Unlock'}
+                        <span className="hidden sm:inline">{user.accountNonLocked ? 'Lock' : 'Unlock'}</span>
                       </Button>
                       
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => handleRoleChange(user.id, user.role === 'ADMIN' ? 'USER' : 'ADMIN')}
-                        className="flex items-center gap-1"
+                        className="flex items-center gap-1 flex-1 sm:flex-initial"
                       >
                         <Crown className="w-3 h-3" />
-                        {user.role === 'ADMIN' ? 'Make User' : 'Make Admin'}
+                        <span className="hidden sm:inline">{user.role === 'ADMIN' ? 'Make User' : 'Make Admin'}</span>
                       </Button>
                       
                       {canDelete() && (
@@ -629,10 +629,10 @@ const UserManagement = () => {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteUser(user.id)}
-                          className="flex items-center gap-1 text-red-600 hover:text-red-700"
+                          className="flex items-center gap-1 text-red-600 hover:text-red-700 flex-1 sm:flex-initial"
                         >
                           <Trash2 className="w-3 h-3" />
-                          Delete
+                          <span className="hidden sm:inline">Delete</span>
                         </Button>
                       )}
                     </div>
@@ -648,8 +648,8 @@ const UserManagement = () => {
       {pagination.totalPages > 1 && (
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-700">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
                 Showing {pagination.currentPage * pagination.pageSize + 1} to{' '}
                 {Math.min((pagination.currentPage + 1) * pagination.pageSize, pagination.totalElements)} of{' '}
                 {pagination.totalElements} results
@@ -661,20 +661,23 @@ const UserManagement = () => {
                   size="sm"
                   onClick={() => handleFilterChange('page', pagination.currentPage - 1)}
                   disabled={pagination.currentPage === 0}
+                  className="text-xs sm:text-sm"
                 >
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
+                  <span className="sm:hidden">Prev</span>
                 </Button>
                 
                 <div className="flex items-center space-x-1">
-                  {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                    const pageNum = Math.max(0, Math.min(pagination.totalPages - 5, pagination.currentPage - 2)) + i;
+                  {Array.from({ length: Math.min(window.innerWidth < 640 ? 3 : 5, pagination.totalPages) }, (_, i) => {
+                    const maxPages = window.innerWidth < 640 ? 3 : 5;
+                    const pageNum = Math.max(0, Math.min(pagination.totalPages - maxPages, pagination.currentPage - Math.floor(maxPages / 2))) + i;
                     return (
                       <Button
                         key={pageNum}
                         variant={pageNum === pagination.currentPage ? "default" : "outline"}
                         size="sm"
                         onClick={() => handleFilterChange('page', pageNum)}
-                        className="w-8 h-8 p-0"
+                        className="w-8 h-8 p-0 text-xs sm:text-sm"
                       >
                         {pageNum + 1}
                       </Button>
@@ -687,6 +690,7 @@ const UserManagement = () => {
                   size="sm"
                   onClick={() => handleFilterChange('page', pagination.currentPage + 1)}
                   disabled={pagination.currentPage === pagination.totalPages - 1}
+                  className="text-xs sm:text-sm"
                 >
                   Next
                 </Button>
@@ -698,13 +702,13 @@ const UserManagement = () => {
 
       {/* User Form Modal */}
       {showUserForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">
+              <h2 className="text-lg sm:text-xl font-semibold">
                 {editingUser ? 'Edit User' : 'Add New User'}
               </h2>
-              <Button variant="ghost" onClick={handleUserCancel}>
+              <Button variant="ghost" onClick={handleUserCancel} className="h-8 w-8 p-0">
                 <X className="w-5 h-5" />
               </Button>
             </div>
@@ -811,11 +815,11 @@ const UserManagement = () => {
                 </div>
               </div>
               
-              <div className="flex justify-end space-x-3 pt-4">
-                <Button type="button" variant="outline" onClick={handleUserCancel}>
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                <Button type="button" variant="outline" onClick={handleUserCancel} className="w-full sm:w-auto">
                   Cancel
                 </Button>
-                <Button type="submit">
+                <Button type="submit" className="w-full sm:w-auto">
                   {editingUser ? 'Update User' : 'Create User'}
                 </Button>
               </div>
@@ -826,11 +830,11 @@ const UserManagement = () => {
 
       {/* User Details Modal */}
       {showDetailsModal && selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">User Details</h2>
-              <Button variant="ghost" onClick={() => setShowDetailsModal(false)}>
+              <h2 className="text-lg sm:text-xl font-semibold">User Details</h2>
+              <Button variant="ghost" onClick={() => setShowDetailsModal(false)} className="h-8 w-8 p-0">
                 <X className="w-5 h-5" />
               </Button>
             </div>
@@ -905,14 +909,14 @@ const UserManagement = () => {
               
               <Separator />
               
-              <div className="flex justify-end space-x-3">
-                <Button variant="outline" onClick={() => setShowDetailsModal(false)}>
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
+                <Button variant="outline" onClick={() => setShowDetailsModal(false)} className="w-full sm:w-auto">
                   Close
                 </Button>
                 <Button onClick={() => {
                   setShowDetailsModal(false);
                   handleEditUser(selectedUser);
-                }}>
+                }} className="w-full sm:w-auto">
                   Edit User
                 </Button>
               </div>

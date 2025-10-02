@@ -103,39 +103,30 @@ const AdvancedFilters = ({
     return Tag;
   };
 
-  const getStatusColor = (status) => {
-    const statusLower = status?.toLowerCase();
-    if (statusLower === 'completed' || statusLower === 'paid') return 'success';
-    if (statusLower === 'pending') return 'warning';
-    if (statusLower === 'cancelled' || statusLower === 'overdue') return 'error';
-    return 'default';
-  };
-
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
         <Card className="border-0 shadow-none">
-          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+          <CardHeader className="border-b border-gray-200 bg-white">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Filter className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Advanced Filters</CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Filter customer history data
-                    {getActiveFiltersCount() > 0 && (
-                      <Badge variant="primary" className="ml-2">
-                        {getActiveFiltersCount()} active
-                      </Badge>
-                    )}
-                  </p>
-                </div>
+              <div>
+                <CardTitle className="text-xl font-semibold text-gray-900">Filters</CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  {getActiveFiltersCount() > 0 ? (
+                    <span>{getActiveFiltersCount()} filter{getActiveFiltersCount() > 1 ? 's' : ''} active</span>
+                  ) : (
+                    <span>Filter customer history data</span>
+                  )}
+                </p>
               </div>
-              <Button variant="outline" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose} 
+                className="h-9 w-9 p-0 text-gray-400 hover:text-gray-900 hover:bg-gray-50"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -325,7 +316,7 @@ const AdvancedFilters = ({
           </CardContent>
 
           {/* Actions */}
-          <div className="border-t bg-gray-50 px-6 py-4">
+          <div className="border-t border-gray-200 bg-gray-50 px-6 py-4">
             <div className="flex justify-between">
               <Button
                 variant="outline"
@@ -333,19 +324,22 @@ const AdvancedFilters = ({
                 className="flex items-center gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
-                Reset All
+                Reset
               </Button>
               <div className="flex gap-3">
-                <Button variant="outline" onClick={onClose}>
+                <Button 
+                  variant="outline" 
+                  onClick={onClose}
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleApply} className="flex items-center gap-2">
-                  <Filter className="w-4 h-4" />
+                <Button 
+                  onClick={handleApply} 
+                  className="bg-gray-900 text-white hover:bg-gray-800"
+                >
                   Apply Filters
                   {getActiveFiltersCount() > 0 && (
-                    <Badge variant="outline" className="bg-white text-blue-600">
-                      {getActiveFiltersCount()}
-                    </Badge>
+                    <span className="ml-2">({getActiveFiltersCount()})</span>
                   )}
                 </Button>
               </div>

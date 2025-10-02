@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-//const API_BASE_URL = 'http://localhost:8888/vm/api';
-const API_BASE_URL = 'http://13.60.223.91:8888/vm/api';
+const API_BASE_URL = 'http://localhost:8888/vm/api';
+//const API_BASE_URL = 'http://13.60.223.91:8888/vm/api';
 
 // Global loading state management
 let activeRequests = 0;
@@ -169,6 +169,12 @@ export const vmServiceOverview = {
   // Get booked services by date
   getBookedServicesByDate: async (date) => {
     const response = await api.get(`/service-center/overview/booked-services/date/${date}`);
+    return response.data;
+  },
+
+  // Get dashboard data
+  getDashboardData: async () => {
+    const response = await api.get('/service-center/dashboard');
     return response.data;
   },
 };
@@ -879,6 +885,75 @@ export const billGenerationAPI = {
   // Share bill via email with PDF
   shareBill: async (emailWithPdfData) => {
     const response = await api.post('/service-center/bookings/bills/send-email-with-pdf', emailWithPdfData);
+    return response.data;
+  }
+};
+
+// Notification API
+export const notificationService = {
+  // Get all notifications for a user with pagination
+  getAllNotifications: async (userEmail, page = 0, size = 20) => {
+    const response = await api.get(`/service-center/notifications`, {
+      params: { userEmail, page, size }
+    });
+    return response.data;
+  },
+
+  // Get unread notifications only
+  getUnreadNotifications: async (userEmail, page = 0, size = 20) => {
+    const response = await api.get(`/service-center/notifications/unread`, {
+      params: { userEmail, page, size }
+    });
+    return response.data;
+  },
+
+  // Get unread count
+  getUnreadCount: async (userEmail) => {
+    const response = await api.get(`/service-center/notifications/unread/count`, {
+      params: { userEmail }
+    });
+    return response.data;
+  },
+
+  // Get notifications by type
+  getNotificationsByType: async (type, userEmail) => {
+    const response = await api.get(`/service-center/notifications/type/${type}`, {
+      params: { userEmail }
+    });
+    return response.data;
+  },
+
+  // Mark notification as read
+  markAsRead: async (notificationId) => {
+    const response = await api.patch(`/service-center/notifications/${notificationId}/read`);
+    return response.data;
+  },
+
+  // Mark all notifications as read
+  markAllAsRead: async (userEmail) => {
+    const response = await api.patch(`/service-center/notifications/mark-all-read`, null, {
+      params: { userEmail }
+    });
+    return response.data;
+  },
+
+  // Delete notification
+  deleteNotification: async (notificationId) => {
+    const response = await api.delete(`/service-center/notifications/${notificationId}`);
+    return response.data;
+  },
+
+  // Delete all read notifications
+  deleteAllRead: async (userEmail) => {
+    const response = await api.delete(`/service-center/notifications/read`, {
+      params: { userEmail }
+    });
+    return response.data;
+  },
+
+  // Create notification (admin only)
+  createNotification: async (notificationData) => {
+    const response = await api.post(`/service-center/notifications`, notificationData);
     return response.data;
   }
 };

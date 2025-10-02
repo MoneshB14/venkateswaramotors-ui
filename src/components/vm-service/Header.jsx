@@ -12,6 +12,8 @@ import {
   User,
   ChevronDown
 } from 'lucide-react';
+import { useNotifications } from '../../hooks/useNotifications';
+import { notificationService } from '../../services/api';
 
 const Header = ({
   // Layout props
@@ -31,6 +33,8 @@ const Header = ({
   onMenuToggle,
   onCollapseToggle,
   onLogout,
+  onNotificationClick,
+  onSettingsClick,
 
   // User data
   user,
@@ -41,31 +45,115 @@ const Header = ({
   companyName = 'Venkateswara Motors',
   companySubtitle = 'Service Center'
 }) => {
+  const { unreadCount } = useNotifications();
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isNotificationDropdownOpen, setIsNotificationDropdownOpen] = useState(false);
+  const [recentNotifications, setRecentNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const dropdownRef = useRef(null);
+  const notificationDropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsProfileDropdownOpen(false);
       }
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+        setIsNotificationDropdownOpen(false);
+      }
     };
 
-    if (isProfileDropdownOpen) {
+    if (isProfileDropdownOpen || isNotificationDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isProfileDropdownOpen]);
+  }, [isProfileDropdownOpen, isNotificationDropdownOpen]);
+
+  // Fetch recent notifications when dropdown opens
+  useEffect(() => {
+    const fetchRecentNotifications = async () => {
+      if (!isNotificationDropdownOpen || !user?.email) return;
+
+      setLoadingNotifications(true);
+      try {
+        const response = await notificationService.getAllNotifications(user.email, 0, 5);
+        if (response.success) {
+          const notifications = response.notifications || [];
+          // Only update state if notifications actually changed
+          setRecentNotifications(prevNotifications => {
+            if (JSON.stringify(prevNotifications) !== JSON.stringify(notifications)) {
+              return notifications;
+            }
+            return prevNotifications;
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch recent notifications:', error);
+        setRecentNotifications([]);
+      } finally {
+        setLoadingNotifications(false);
+      }
+    };
+
+    fetchRecentNotifications();
+  }, [isNotificationDropdownOpen, user?.email]);
 
   const handleLogout = () => {
     if (onLogout) {
       onLogout();
     }
     setIsProfileDropdownOpen(false);
+  };
+
+  // Format notification timestamp
+  const formatTimestamp = (timestamp) => {
+    const now = new Date();
+    const notifDate = new Date(timestamp);
+    const diff = now - notifDate;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days === 1) return 'Yesterday';
+    if (days < 7) return `${days}d ago`;
+    return notifDate.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+  };
+
+  // Handle notification click
+  const handleNotificationClick = async (notification) => {
+    // Mark as read if unread
+    if (!notification.isRead) {
+      try {
+        await notificationService.markAsRead(notification.notificationId);
+      } catch (error) {
+        console.error('Failed to mark notification as read:', error);
+      }
+    }
+
+    // Close dropdown
+    setIsNotificationDropdownOpen(false);
+
+    // Navigate to notifications page
+    if (onNotificationClick) {
+      onNotificationClick();
+    }
+  };
+
+  // Handle view all notifications
+  const handleViewAllNotifications = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsNotificationDropdownOpen(false);
+    if (onNotificationClick) {
+      onNotificationClick();
+    }
   };
 
   const renderLogo = () => (
@@ -135,9 +223,116 @@ const Header = ({
     </div>
   );
 
-  const renderNotifications = () => null;
+  const renderNotifications = () => (
+    <div className="relative" ref={notificationDropdownRef}>
+      <Button
+        variant="ghost"
+        size="icon"
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsNotificationDropdownOpen(!isNotificationDropdownOpen);
+        }}
+        className="relative h-9 w-9 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+        title="Notifications"
+      >
+        <Bell className="h-4 w-4 text-gray-600" />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </Button>
 
-  const renderSettings = () => null;
+      {/* Notification Dropdown */}
+      {isNotificationDropdownOpen && (
+        <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-xl shadow-lg border border-gray-200 z-50 max-h-[500px] overflow-hidden">
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-gray-900">Notifications</h3>
+            {unreadCount > 0 && (
+              <span className="text-xs text-gray-500">{unreadCount} unread</span>
+            )}
+          </div>
+
+          {/* Notifications List */}
+          <div className="max-h-[350px] overflow-y-auto">
+            {loadingNotifications ? (
+              <div className="py-8 text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-sm text-gray-500 mt-2">Loading...</p>
+              </div>
+            ) : recentNotifications.length === 0 ? (
+              <div className="py-8 text-center">
+                <Bell className="h-10 w-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">No notifications</p>
+              </div>
+            ) : (
+              recentNotifications.map((notif) => (
+                <div
+                  key={notif.notificationId}
+                  onClick={() => handleNotificationClick(notif)}
+                  className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${!notif.isRead ? 'bg-blue-50/50' : ''
+                    }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className={`text-sm font-medium ${!notif.isRead ? 'text-blue-900' : 'text-gray-900'}`}>
+                          {notif.title}
+                        </p>
+                        {!notif.isRead && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 line-clamp-2">{notif.notificationMessage}</p>
+                      <p className="text-xs text-gray-400 mt-1">{formatTimestamp(notif.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <Button
+              variant="ghost"
+              type="button"
+              onClick={handleViewAllNotifications}
+              className="w-full text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-medium text-sm"
+            >
+              View all notifications
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderSettings = () => {
+    const handleSettingsClickInternal = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (onSettingsClick) {
+        onSettingsClick();
+      }
+    };
+
+    return (
+      <Button
+        variant="ghost"
+        size="icon"
+        type="button"
+        onClick={handleSettingsClickInternal}
+        className="h-9 w-9 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+        title="Settings"
+      >
+        <Settings className="h-4 w-4 text-gray-600" />
+      </Button>
+    );
+  };
 
   const renderCollapseButton = () => (
     <Button

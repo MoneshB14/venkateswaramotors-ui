@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth.jsx';
-import { menuItems } from '../../config/menuConfig';
+import { menuItems, bottomMenuItems } from '../../config/menuConfig';
 import DashboardContent from './DashboardContent';
 import CollapsibleSidebar from './CollapsibleSidebar';
 import Header from './Header';
@@ -40,13 +40,17 @@ const Dashboard = () => {
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
+  // Get current menu item from both main and bottom menu items
+  const allMenuItems = [...menuItems, ...bottomMenuItems];
+  const currentMenuItem = allMenuItems.find(item => item.id === activeMenu);
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Unified Header - Full Width */}
       <Header
         variant="unified"
-        title={menuItems.find(item => item.id === activeMenu)?.title || 'Dashboard'}
-        subtitle={menuItems.find(item => item.id === activeMenu)?.description || 'Welcome to your dashboard'}
+        title={currentMenuItem?.title || 'Dashboard'}
+        subtitle={currentMenuItem?.description || 'Welcome to your dashboard'}
         onLogout={handleLogout}
         onCollapseToggle={toggleSidebarCollapse}
         isCollapsed={sidebarCollapsed}
@@ -59,6 +63,8 @@ const Dashboard = () => {
         showSearch={false}
         onMenuToggle={toggleSidebar}
         isOpen={sidebarOpen}
+        onNotificationClick={() => handleMenuClick('notifications')}
+        onSettingsClick={() => handleMenuClick('settings')}
         className="w-full"
       />
 

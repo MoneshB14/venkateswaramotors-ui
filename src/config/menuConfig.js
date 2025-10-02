@@ -4,7 +4,9 @@ import {
   Calendar,
   UserPlus,
   Package,
-  MessageSquare
+  MessageSquare,
+  Bell,
+  Settings
 } from 'lucide-react';
 
 export const menuItems = [
@@ -47,6 +49,20 @@ export const menuItems = [
 ];
 
 export const bottomMenuItems = [
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    icon: Bell,
+    href: '/dashboard/notifications',
+    description: 'View all notifications'
+  },
+  {
+    id: 'settings',
+    title: 'Settings',
+    icon: Settings,
+    href: '/dashboard/settings',
+    description: 'Application settings'
+  },
   {
     id: 'help',
     title: 'Help & Support',

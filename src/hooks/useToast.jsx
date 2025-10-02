@@ -1,81 +1,36 @@
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 
 export const useToast = () => {
   const showToast = {
     success: (title, description) => {
-      toast.success(
-        <div>
-          <div className="font-semibold">{title}</div>
-          {description && <div className="text-sm opacity-90">{description}</div>}
-        </div>,
-        {
-          duration: 5000,
-          style: {
-            background: '#f0fdf4',
-            color: '#166534',
-            border: '1px solid #bbf7d0',
-          },
-        }
-      );
+      toast.success(title, {
+        description: description,
+        duration: 3000,
+      });
     },
     error: (title, description) => {
-      toast.error(
-        <div>
-          <div className="font-semibold">{title}</div>
-          {description && <div className="text-sm opacity-90">{description}</div>}
-        </div>,
-        {
-          duration: 5000,
-          style: {
-            background: '#fef2f2',
-            color: '#dc2626',
-            border: '1px solid #fecaca',
-          },
-        }
-      );
+      toast.error(title, {
+        description: description,
+        duration: 3000,
+      });
     },
     info: (title, description) => {
-      toast(
-        <div>
-          <div className="font-semibold">{title}</div>
-          {description && <div className="text-sm opacity-90">{description}</div>}
-        </div>,
-        {
-          duration: 5000,
-          style: {
-            background: '#eff6ff',
-            color: '#1d4ed8',
-            border: '1px solid #bfdbfe',
-          },
-        }
-      );
+      toast.info(title, {
+        description: description,
+        duration: 3000,
+      });
     },
     warning: (title, description) => {
-      toast(
-        <div>
-          <div className="font-semibold">{title}</div>
-          {description && <div className="text-sm opacity-90">{description}</div>}
-        </div>,
-        {
-          duration: 5000,
-          style: {
-            background: '#fffbeb',
-            color: '#d97706',
-            border: '1px solid #fde68a',
-          },
-        }
-      );
+      toast.warning(title, {
+        description: description,
+        duration: 3000,
+      });
     },
     default: (title, description) => {
-      toast(
-        <div>
-          <div className="font-semibold">{title}</div>
-          {description && <div className="text-sm opacity-90">{description}</div>}
-        </div>,
-        {
-          duration: 5000,
-        }
-      );
+      toast(title, {
+        description: description,
+        duration: 3000,
+      });
     },
   };
 
@@ -83,6 +38,6 @@ export const useToast = () => {
     toast: showToast,
     // For backward compatibility
     toasts: [],
-    removeToast: () => {},
+    removeToast: () => { },
   };
 }; 

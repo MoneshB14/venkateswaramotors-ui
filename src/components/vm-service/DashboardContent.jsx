@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import {
@@ -21,7 +21,7 @@ import {
   AlertTriangle,
   DollarSign
 } from 'lucide-react';
-import { vmServiceOverview, inventoryAPI } from '../../services/api';
+import { vmServiceOverview } from '../../services/api';
 import { useToast } from '../../hooks/useToast';
 import { useGlobal } from '../../hooks/useGlobal';
 import ThreeBodyLoader from '../ui/ThreeBodyLoader';
@@ -31,6 +31,8 @@ import BookingsManagement from './BookingsManagement';
 import CustomersManagement from './CustomersManagement';
 import InventoryManagementRouter from './InventoryManagementRouter';
 import UserManagement from './UserManagement';
+import Settings from './Settings';
+import Notifications from './Notifications';
 import {
   BarChart,
   Bar,
@@ -47,207 +49,108 @@ import {
 } from 'recharts';
 
 const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
-  const [dashboardStats, setDashboardStats] = useState(null);
   const [inventoryStats, setInventoryStats] = useState(null);
+  const [analyticsData, setAnalyticsData] = useState(null);
 
   // Debug effect to track inventoryStats changes
   useEffect(() => {
     console.log('Inventory stats changed:', inventoryStats);
   }, [inventoryStats]);
-  const [todayBookings, setTodayBookings] = useState([]);
   const [recentBookings, setRecentBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const dataLoadedRef = useRef(false);
+  const fetchDataRef = useRef(null);
   const { toast } = useToast();
   const { showGlobalLoading, hideGlobalLoading } = useGlobal();
 
-  // Handle dashboard card clicks
-  const handleCardClick = (cardType) => {
-    let filters = {};
 
-    switch (cardType) {
-      case 'totalBookings':
-        // Show all bookings
-        filters = {};
-        break;
-      case 'pendingServices':
-        // Show pending bookings
-        filters = { status: 'PENDING' };
-        break;
-      case 'completedServices':
-        // Show completed bookings
-        filters = { status: 'COMPLETED' };
-        break;
-      case 'todayAppointments': {
-        // Show today's bookings
-        const todayDate = new Date().toISOString().split('T')[0];
-        filters = { dateFrom: todayDate, dateTo: todayDate };
-        break;
-      }
-      case 'thisWeek': {
-        // Show this week's bookings (Monday to Sunday)
-        const currentDate = new Date();
-        const dayOfWeek = currentDate.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        const startOfWeek = new Date(currentDate);
-        startOfWeek.setDate(currentDate.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1)); // Monday
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 6); // Sunday
-        filters = {
-          dateFrom: startOfWeek.toISOString().split('T')[0],
-          dateTo: endOfWeek.toISOString().split('T')[0]
-        };
-        break;
-      }
-      case 'thisMonth': {
-        // Show this month's bookings
-        const startOfMonth = new Date();
-        startOfMonth.setDate(1);
-        const endOfMonth = new Date();
-        endOfMonth.setMonth(endOfMonth.getMonth() + 1, 0);
-        filters = {
-          dateFrom: startOfMonth.toISOString().split('T')[0],
-          dateTo: endOfMonth.toISOString().split('T')[0]
-        };
-        break;
-      }
-      case 'cancelled':
-        // Show cancelled bookings
-        filters = { status: 'CANCELLED' };
-        break;
-      default:
-        filters = {};
-    }
+  // Handle dashboard card clicks (keeping for potential future use)
+  // const handleCardClick = (cardType) => {
+  //   let filters = {};
+  //   // ... card click logic
+  // };
 
-    onMenuClick('bookings', filters);
-  };
-
-  // Fetch dashboard data
-  const fetchDashboardData = async () => {
+  // Fetch dashboard data from API
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       showGlobalLoading('Loading dashboard data...');
 
-      // Fetch dashboard statistics
-      const statsResponse = await vmServiceOverview.getDashboardStats();
-      if (statsResponse.success) {
-        setDashboardStats(statsResponse.stats);
+      // Fetch dashboard data from API
+      const response = await vmServiceOverview.getDashboardData();
+      console.log('Dashboard API Response:', response);
+      
+      if (response) {
+        const data = response;
+
+        // Set analytics data
+        const analytics = {
+          todayIncome: data.kpiCards?.todaysIncome || 0,
+          todayServices: data.kpiCards?.todaysCompletedServices || 0,
+          pendingBookings: data.kpiCards?.totalPendingBookings || 0,
+          completedBookings: data.kpiCards?.totalCompletedBookings || 0,
+          dailyIncomeData: (data.dailyIncomeChart || []).map(item => ({
+            day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+            date: item.date,
+            income: item.income || 0,
+            services: item.serviceCount || 0
+          })),
+          serviceTypesData: (data.serviceTypeChart || []).map(item => ({
+            name: item.serviceType || 'Unknown',
+            value: item.count || 0,
+            percentage: (item.percentage || 0).toFixed(1)
+          }))
+        };
+        console.log('Processed Analytics Data:', analytics);
+        setAnalyticsData(analytics);
+
+        // Set recent bookings
+        const recentBookings = (data.recentActivity || []).map(booking => ({
+          id: booking.bookingId || '',
+          serviceType: booking.serviceType || 'Unknown Service',
+          vehicleModel: booking.vehicleRegistration || 'Unknown Vehicle', // Using registration as model for now
+          customerName: booking.customerName || 'Unknown Customer',
+          vehicleRegistration: booking.vehicleRegistration || '',
+          preferredDate: booking.preferredDate || '',
+          preferredTime: booking.preferredTime || '',
+          bookingStatus: booking.bookingStatus || 'UNKNOWN',
+          createdAt: booking.createdAt || new Date().toISOString(),
+          totalAmount: parseFloat(booking.estimatedCost) || 0,
+          assignedTechnician: booking.assignedTechnician || 'Not Assigned'
+        }));
+        setRecentBookings(recentBookings);
+
+        // Set inventory stats
+        const inventoryAnalytics = data.inventoryAnalytics || {};
+        const stockBreakdowns = inventoryAnalytics.stockLevelBreakdowns || [];
+        const categoryDistributions = inventoryAnalytics.categoryDistributions || [];
+        
+        const inventoryStats = {
+          totalItems: inventoryAnalytics.totalItemsCount || 0,
+          inStockItems: stockBreakdowns.find(level => level.level === 'In Stock')?.count || 0,
+          lowStockItems: stockBreakdowns.find(level => level.level === 'Low Stock')?.count || 0,
+          outOfStockItems: stockBreakdowns.find(level => level.level === 'Out of Stock')?.count || 0,
+          totalValue: inventoryAnalytics.totalInventoryValue || 0,
+          categoryDistribution: categoryDistributions.map(cat => ({
+            name: (cat.category || 'Unknown').replace(/_/g, ' '),
+            value: cat.count || 0
+          })),
+          stockLevels: categoryDistributions.map(cat => ({
+            category: (cat.category || 'Unknown').replace(/_/g, ' '),
+            quantity: cat.count || 0
+          }))
+        };
+        setInventoryStats(inventoryStats);
+
+        // Show success message
+        toast.success('Dashboard Updated', 'Latest data has been loaded successfully.');
+      } else {
+        throw new Error('Invalid response format');
       }
-
-      // Fetch inventory data for analytics
-      try {
-        console.log('Fetching inventory data...');
-        // Get all inventory items for analytics
-        const allItemsResponse = await inventoryAPI.getInventoryItems({ size: 1000 });
-        const lowStockResponse = await inventoryAPI.getLowStockItems();
-        const outOfStockResponse = await inventoryAPI.getOutOfStockItems();
-
-        console.log('Inventory API responses:', {
-          allItems: allItemsResponse,
-          lowStock: lowStockResponse,
-          outOfStock: outOfStockResponse
-        });
-
-        // Check if APIs returned data (handle both success property and direct data)
-        const hasAllItems = allItemsResponse.success !== false && (allItemsResponse.items || allItemsResponse.content || allItemsResponse.data);
-        const hasLowStock = lowStockResponse.success !== false && (lowStockResponse.items || lowStockResponse.content || lowStockResponse.data);
-        const hasOutOfStock = outOfStockResponse.success !== false && (outOfStockResponse.items || outOfStockResponse.content || outOfStockResponse.data);
-
-        if (hasAllItems && hasLowStock && hasOutOfStock) {
-          // Handle different possible response structures
-          const allItems = allItemsResponse.items || allItemsResponse.content || allItemsResponse.data || [];
-          const lowStockItems = lowStockResponse.items || lowStockResponse.content || lowStockResponse.data || [];
-          const outOfStockItems = outOfStockResponse.items || outOfStockResponse.content || outOfStockResponse.data || [];
-
-          // Calculate analytics data
-          const totalItems = allItems.length;
-          const inStockItems = totalItems - lowStockItems.length - outOfStockItems.length;
-          const lowStockCount = lowStockItems.length;
-          const outOfStockCount = outOfStockItems.length;
-
-          // Calculate total value
-          const totalValue = allItems.reduce((sum, item) => {
-            return sum + ((item.currentStock || 0) * (item.costPrice || 0));
-          }, 0);
-
-          // Group items by category for charts
-          const categoryMap = {};
-          const stockLevelsMap = {};
-
-          allItems.forEach(item => {
-            const category = item.category || 'Other';
-
-            // Category distribution
-            if (!categoryMap[category]) {
-              categoryMap[category] = 0;
-            }
-            categoryMap[category]++;
-
-            // Stock levels
-            if (!stockLevelsMap[category]) {
-              stockLevelsMap[category] = 0;
-            }
-            stockLevelsMap[category] += item.currentStock || 0;
-          });
-
-          // Convert to chart data format
-          const categoryDistribution = Object.entries(categoryMap).map(([name, value]) => ({
-            name,
-            value
-          }));
-
-          const stockLevels = Object.entries(stockLevelsMap).map(([category, quantity]) => ({
-            category,
-            quantity
-          }));
-
-          const inventoryAnalytics = {
-            totalItems,
-            inStockItems,
-            lowStockItems: lowStockCount,
-            outOfStockItems: outOfStockCount,
-            totalValue,
-            categoryDistribution,
-            stockLevels
-          };
-
-          console.log('Setting inventory stats:', inventoryAnalytics);
-          setInventoryStats(inventoryAnalytics);
-        } else {
-          console.log('One or more inventory API calls failed');
-          // Temporary fallback for testing - remove this in production
-          console.log('Using fallback inventory data for testing');
-          setInventoryStats({
-            totalItems: 0,
-            inStockItems: 0,
-            lowStockItems: 0,
-            outOfStockItems: 0,
-            totalValue: 0,
-            categoryDistribution: [],
-            stockLevels: []
-          });
-        }
-      } catch (inventoryErr) {
-        console.error('Error fetching inventory data:', inventoryErr);
-        // Don't set inventory stats if there's an error - section won't show
-      }
-
-      // Fetch today's bookings
-      const todayResponse = await vmServiceOverview.getTodayBookedServices();
-      if (todayResponse.success) {
-        setTodayBookings(todayResponse.bookedServices || []);
-      }
-
-      // Fetch recent bookings (all booked services)
-      const recentResponse = await vmServiceOverview.getAllBookedServices();
-      if (recentResponse.success) {
-        setRecentBookings(recentResponse.bookedServices || []);
-      }
-
-      // Show success message
-      // toast.success('Dashboard Updated', 'Latest data has been loaded successfully.');
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data. Please try again.');
@@ -256,11 +159,20 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
       setLoading(false);
       hideGlobalLoading();
     }
-  };
+  }, [showGlobalLoading, hideGlobalLoading, toast]);
+
+  // Store the function in a ref to avoid dependency issues
+  fetchDataRef.current = fetchDashboardData;
 
   useEffect(() => {
     if (activeMenu === 'overview') {
-      fetchDashboardData();
+      if (!dataLoadedRef.current) {
+        dataLoadedRef.current = true;
+        fetchDataRef.current();
+      }
+    } else {
+      // Reset the flag when switching away from overview
+      dataLoadedRef.current = false;
     }
   }, [activeMenu]);
 
@@ -338,25 +250,24 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
     setSelectedBooking(null);
   };
 
-  // Handle calendar date click
-  const handleCalendarDateClick = (date, appointments) => {
-    if (appointments.length > 0) {
-      // Show the first appointment in modal
-      setSelectedBooking(appointments[0]);
-      setIsModalOpen(true);
-    }
-  };
+  // Handle calendar date click (keeping for potential future use)
+  // const handleCalendarDateClick = (date, appointments) => {
+  //   if (appointments.length > 0) {
+  //     setSelectedBooking(appointments[0]);
+  //     setIsModalOpen(true);
+  //   }
+  // };
 
-  // Handle appointment click (from calendar or appointment list)
-  const handleAppointmentClick = (appointment) => {
-    setSelectedBooking(appointment);
-    setIsModalOpen(true);
-  };
+  // Handle appointment click (keeping for potential future use)
+  // const handleAppointmentClick = (appointment) => {
+  //   setSelectedBooking(appointment);
+  //   setIsModalOpen(true);
+  // };
 
-  // Handle schedule new appointment
-  const handleScheduleNew = () => {
-    onMenuClick('bookings');
-  };
+  // Handle schedule new appointment (keeping for potential future use)
+  // const handleScheduleNew = () => {
+  //   onMenuClick('bookings');
+  // };
 
   const renderOverview = () => (
     <div className="space-y-8 w-full">
@@ -373,8 +284,8 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                   <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="text-sm text-gray-600 font-medium">Service center overview & analytics</p>
+                  <h1 className="text-2xl font-bold text-gray-900">Analytics Dashboard</h1>
+                  <p className="text-sm text-gray-600 font-medium">Service center performance & insights</p>
                 </div>
               </div>
             </div>
@@ -392,7 +303,10 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={fetchDashboardData}
+                  onClick={() => {
+                    dataLoadedRef.current = false;
+                    fetchDataRef.current();
+                  }}
                   disabled={loading}
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
                 >
@@ -429,7 +343,10 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                 variant="outline"
                 size="sm"
                 className="border-red-300 text-red-700 hover:bg-red-100 w-full sm:w-auto"
-                onClick={fetchDashboardData}
+                onClick={() => {
+                  dataLoadedRef.current = false;
+                  fetchDataRef.current();
+                }}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
@@ -439,156 +356,231 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         </div>
       )}
 
-      {/* Dashboard Stats Cards */}
-      {dashboardStats && (
-        <>
-          {/* Enhanced Primary Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="group cursor-pointer border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30" onClick={() => handleCardClick('totalBookings')} title="Click to view all bookings">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Total Bookings</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardStats.totalBookings}</p>
-                    <p className="text-sm text-gray-500 mt-1">All time records</p>
-                  </div>
-                  <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow">
-                    <Calendar className="h-7 w-7 text-white" />
-                  </div>
+      {/* KPI Cards */}
+      {analyticsData && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* Today's Income */}
+          <Card className="border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-green-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Today's Income</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">₹{analyticsData.todayIncome.toLocaleString()}</p>
+                  <p className="text-sm text-gray-500 mt-1">Completed services</p>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center text-sm text-green-600 font-medium">
-                    <TrendingUp className="h-4 w-4 mr-2" />
-                    <span>+12%</span>
-                  </div>
-                  <span className="text-xs text-gray-500">vs last month</span>
+                <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <DollarSign className="h-7 w-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center text-sm text-green-600 font-medium">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  <span>Revenue</span>
+                </div>
+                <span className="text-xs text-gray-500">Today</span>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="border border-gray-200 hover:border-amber-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-amber-50/30">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Pending Services</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardStats.pendingBookings}</p>
-                    <p className="text-sm text-gray-500 mt-1">Awaiting completion</p>
-                  </div>
-                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                    <Clock className="h-7 w-7 text-white" />
-                  </div>
+          {/* Total Services Done Today */}
+          <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-blue-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Services Done Today</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{analyticsData.todayServices}</p>
+                  <p className="text-sm text-gray-500 mt-1">Completed today</p>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center text-sm text-amber-600 font-medium">
-                    <Clock className="h-4 w-4 mr-2" />
-                    <span>Requires attention</span>
-                  </div>
-                  <span className="text-xs text-gray-500">Priority queue</span>
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <CheckCircle className="h-7 w-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center text-sm text-blue-600 font-medium">
+                  <Activity className="h-4 w-4 mr-2" />
+                  <span>Performance</span>
+                </div>
+                <span className="text-xs text-gray-500">Today</span>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Card className="border border-gray-200 hover:border-green-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-green-50/30">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed</p>
-                    <p className="text-3xl font-bold text-gray-900 mt-2">{dashboardStats.completedBookings}</p>
-                    <p className="text-sm text-gray-500 mt-1">This month</p>
-                  </div>
-                  <div className="w-14 h-14 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                    <CheckCircle className="h-7 w-7 text-white" />
-                  </div>
+          {/* Pending Bookings */}
+          <Card className="border border-gray-200 hover:border-amber-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-amber-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Pending Bookings</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{analyticsData.pendingBookings}</p>
+                  <p className="text-sm text-gray-500 mt-1">Awaiting completion</p>
                 </div>
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                  <div className="flex items-center text-sm text-green-600 font-medium">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    <span>Successfully finished</span>
-                  </div>
-                  <span className="text-xs text-gray-500">Quality service</span>
+                <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
+                  <Clock className="h-7 w-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center text-sm text-amber-600 font-medium">
+                  <Clock className="h-4 w-4 mr-2" />
+                  <span>In Queue</span>
+                </div>
+                <span className="text-xs text-gray-500">All time</span>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Enhanced Quick Stats Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card className="border border-gray-200 hover:border-indigo-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-indigo-50/20">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Today</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.todayBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">Appointments</p>
-                  </div>
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
-                    <Calendar className="h-6 w-6 text-white" />
-                  </div>
+          {/* Completed Services */}
+          <Card className="border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-purple-50/30">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Completed Services</p>
+                  <p className="text-3xl font-bold text-gray-900 mt-2">{analyticsData.completedBookings}</p>
+                  <p className="text-sm text-gray-500 mt-1">Successfully finished</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-purple-50/20">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">This Week</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.thisWeekBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">Scheduled</p>
-                  </div>
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
-                    <TrendingUp className="h-6 w-6 text-white" />
-                  </div>
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <BarChart3 className="h-7 w-7 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-gray-200 hover:border-blue-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-blue-50/20">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.thisMonthBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">Total services</p>
-                  </div>
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-md">
-                    <BarChart3 className="h-6 w-6 text-white" />
-                  </div>
+              </div>
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <div className="flex items-center text-sm text-purple-600 font-medium">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span>Total</span>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-gray-200 hover:border-red-300 hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-red-50/20">
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide">Cancelled</p>
-                    <p className="text-2xl font-bold text-gray-900 mt-1">{dashboardStats.cancelledBookings}</p>
-                    <p className="text-xs text-gray-500 mt-1">No shows</p>
-                  </div>
-                  <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
-                    <XCircle className="h-6 w-6 text-white" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </>
+                <span className="text-xs text-gray-500">All time</span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Calendar Widget */}
-        <div className="xl:col-span-2">
-          <CompactCalendar
-            todayBookings={todayBookings}
-            allBookings={recentBookings}
-            onDateClick={handleCalendarDateClick}
-            onScheduleNew={handleScheduleNew}
-            onAppointmentClick={handleAppointmentClick}
-          />
-        </div>
+      {/* Analytics Charts Section */}
+      {analyticsData && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          {/* Daily Income Chart */}
+          <div className="xl:col-span-2">
+            <Card className="border border-gray-200 shadow-sm">
+              <CardHeader className="border-b border-gray-100 px-6 py-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                      <TrendingUp className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg font-semibold text-gray-900">Daily Income Trend</CardTitle>
+                      <CardDescription className="text-sm text-gray-500">
+                        Revenue over the past 7 days
+                      </CardDescription>
+                    </div>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={analyticsData.dailyIncomeData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis
+                      dataKey="day"
+                      stroke="#6b7280"
+                      fontSize={12}
+                    />
+                    <YAxis
+                      stroke="#6b7280"
+                      fontSize={12}
+                      tickFormatter={(value) => `₹${value.toLocaleString()}`}
+                    />
+                    <Tooltip
+                      formatter={(value) => [`₹${value.toLocaleString()}`, 'Income']}
+                      labelFormatter={(label) => `Day: ${label}`}
+                      contentStyle={{
+                        backgroundColor: 'white',
+                        border: '1px solid #e5e7eb',
+                        borderRadius: '8px',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="income"
+                      stroke="#10b981"
+                      strokeWidth={3}
+                      dot={{ fill: '#10b981', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, stroke: '#10b981', strokeWidth: 2 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
 
+          {/* Service Types Distribution */}
+          <div className="xl:col-span-1">
+            <Card className="border border-gray-200 shadow-sm h-full">
+              <CardHeader className="border-b border-gray-100 px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Service Types</CardTitle>
+                    <CardDescription className="text-sm text-gray-500">
+                      Distribution of completed services
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-6">
+                {analyticsData.serviceTypesData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={analyticsData.serviceTypesData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={100}
+                        paddingAngle={5}
+                        dataKey="value"
+                        label={({ name, percentage }) => `${name} (${percentage}%)`}
+                        labelLine={false}
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: '500'
+                        }}
+                      >
+                        {analyticsData.serviceTypesData.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'][index % 5]}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value) => [value, 'Services']}
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="text-center">
+                      <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No service data available</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Quick Actions & Recent Activity */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Quick Actions */}
         <div className="xl:col-span-1">
           <Card className="border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 h-fit bg-gradient-to-br from-white to-blue-50/20">
@@ -647,6 +639,95 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
                   <div className="text-xs text-gray-500">Monitor parts and supplies</div>
                 </div>
               </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Recent Activity Feed */}
+        <div className="xl:col-span-2">
+          <Card className="border border-gray-200 shadow-sm">
+            <CardHeader className="border-b border-gray-100 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
+                    <CardDescription className="text-sm text-gray-500">
+                      Latest updates and bookings
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onMenuClick('bookings')}
+                  className="hidden sm:flex border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  View All
+                  <ArrowUpRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {recentBookings.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center mx-auto mb-4">
+                    <Activity className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
+                  <p className="text-gray-500">Recent bookings and updates will appear here.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-100">
+                  {recentBookings.slice(0, 3).map((booking) => (
+                    <div
+                      key={booking.id}
+                      className="p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer group"
+                      onClick={() => handleBookingClick(booking)}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                        <div className="flex-shrink-0">
+                          {booking.bookingStatus === 'COMPLETED' && (
+                            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                              <CheckCircle className="h-5 w-5 text-emerald-600" />
+                            </div>
+                          )}
+                          {booking.bookingStatus === 'PENDING' && (
+                            <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
+                              <Clock className="h-5 w-5 text-amber-600" />
+                            </div>
+                          )}
+                          {booking.bookingStatus === 'CANCELLED' && (
+                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                              <XCircle className="h-5 w-5 text-red-600" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 mb-1">
+                            {booking.serviceType} for {booking.vehicleModel}
+                          </p>
+                          <p className="text-sm text-gray-500 mb-1">
+                            {booking.customerName} • {booking.vehicleRegistration}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {formatDate(booking.preferredDate)} at {formatTime(booking.preferredTime)}
+                          </p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                          {getStatusBadge(booking.bookingStatus)}
+                          <div className="text-xs text-gray-400">
+                            {getTimeAgo(booking.createdAt)}
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors hidden sm:block" />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -779,92 +860,6 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
         </div>
       )}
 
-      {/* Recent Activity */}
-      <Card className="border border-gray-200 shadow-sm">
-        <CardHeader className="border-b border-gray-100 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-50 rounded-lg flex items-center justify-center">
-                <Activity className="h-5 w-5 text-gray-600" />
-              </div>
-              <div>
-                <CardTitle className="text-lg font-semibold text-gray-900">Recent Activity</CardTitle>
-                <CardDescription className="text-sm text-gray-500">
-                  Latest bookings and system updates
-                </CardDescription>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onMenuClick('bookings')}
-              className="hidden sm:flex border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              View All
-              <ArrowUpRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="p-0">
-          {recentBookings.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gray-50 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Activity className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
-              <p className="text-gray-500">Recent bookings and updates will appear here.</p>
-            </div>
-          ) : (
-            <div className="divide-y divide-gray-100">
-              {recentBookings.slice(0, 8).map((booking) => (
-                <div
-                  key={booking.id}
-                  className="p-4 sm:p-6 hover:bg-gray-50 transition-colors cursor-pointer group"
-                  onClick={() => handleBookingClick(booking)}
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    <div className="flex-shrink-0">
-                      {booking.bookingStatus === 'COMPLETED' && (
-                        <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <CheckCircle className="h-5 w-5 text-emerald-600" />
-                        </div>
-                      )}
-                      {booking.bookingStatus === 'PENDING' && (
-                        <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                          <Clock className="h-5 w-5 text-amber-600" />
-                        </div>
-                      )}
-                      {booking.bookingStatus === 'CANCELLED' && (
-                        <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-                          <XCircle className="h-5 w-5 text-red-600" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 mb-1">
-                        {booking.serviceType} for {booking.vehicleModel}
-                      </p>
-                      <p className="text-sm text-gray-500 mb-1">
-                        {booking.customerName} • {booking.vehicleRegistration}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatDate(booking.preferredDate)} at {formatTime(booking.preferredTime)}
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-                      {getStatusBadge(booking.bookingStatus)}
-                      <div className="text-xs text-gray-400">
-                        {getTimeAgo(booking.createdAt)}
-                      </div>
-                      <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 transition-colors hidden sm:block" />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 
@@ -883,12 +878,18 @@ const DashboardContent = ({ activeMenu, onMenuClick, bookingFilters }) => {
 
   const renderUsers = () => <UserManagement />;
 
+  const renderSettings = () => <Settings />;
+
+  const renderNotifications = () => <Notifications />;
+
   const contentMap = {
     overview: renderOverview,
     bookings: renderBookings,
     customers: renderCustomers,
     inventory: renderInventory,
-    users: renderUsers
+    users: renderUsers,
+    settings: renderSettings,
+    notifications: renderNotifications
   };
 
   const renderContent = contentMap[activeMenu] || renderOverview;

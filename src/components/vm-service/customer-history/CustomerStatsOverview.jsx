@@ -10,7 +10,8 @@ import {
   Wrench,
   CreditCard,
   Target,
-  Activity
+  Activity,
+  CheckCircle
 } from 'lucide-react';
 import { calculateCustomerStats, formatCurrency, formatDate, getRelativeTime } from '../../../utils/customerUtils';
 import {
@@ -71,140 +72,102 @@ const CustomerStatsOverview = ({ data }) => {
 
   return (
     <div className="space-y-6">
-      {/* Primary Metrics - Emphasized Cards */}
+      {/* Key Financial Metrics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Total Billed - Prominent Card */}
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200 shadow-sm">
+        {/* Revenue Card */}
+        <div className="bg-white border border-gray-200 rounded-lg p-6">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-                <Receipt className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-blue-900">Total Billed</h3>
-                <p className="text-sm text-blue-700">{stats.paymentRate}% payment rate</p>
-              </div>
+            <div>
+              <div className="text-sm font-medium text-gray-500 mb-1">Total Revenue</div>
+              <div className="text-4xl font-semibold text-gray-900">{formatCurrency(stats.totalBilled)}</div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold text-blue-900">{formatCurrency(stats.totalBilled)}</div>
-              <div className="text-sm text-blue-700">₹{stats.completedBookings} completed</div>
+              <div className="text-xs text-gray-500 mb-1">Payment Rate</div>
+              <div className="text-2xl font-semibold text-gray-700">{stats.paymentRate}%</div>
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-blue-800">Paid: {formatCurrency(stats.paidAmount)}</span>
-            <span className="text-sm text-blue-800">Pending: {formatCurrency(stats.pendingAmount)}</span>
+          <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-100">
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Paid</div>
+              <div className="text-lg font-semibold text-emerald-600">{formatCurrency(stats.paidAmount)}</div>
+            </div>
+            <div>
+              <div className="text-xs text-gray-500 mb-1">Pending</div>
+              <div className={`text-lg font-semibold ${stats.pendingAmount > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                {formatCurrency(stats.pendingAmount)}
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Pending Amount - Highlighted Card */}
-        <div className={`rounded-xl p-6 border shadow-sm ${
+        {/* Payment Status Card */}
+        <div className={`border rounded-lg p-6 ${
           stats.pendingAmount > 0 
-            ? 'bg-gradient-to-br from-amber-50 to-orange-100 border-amber-200' 
-            : 'bg-gradient-to-br from-emerald-50 to-green-100 border-emerald-200'
+            ? 'bg-amber-50/50 border-amber-200' 
+            : 'bg-emerald-50/50 border-emerald-200'
         }`}>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                stats.pendingAmount > 0 ? 'bg-amber-500' : 'bg-emerald-500'
-              }`}>
-                <CreditCard className="h-6 w-6 text-white" />
+            <div>
+              <div className="text-sm font-medium text-gray-500 mb-1">
+                {stats.pendingAmount > 0 ? 'Outstanding Balance' : 'Payment Status'}
               </div>
-              <div>
-                <h3 className={`text-lg font-semibold ${
-                  stats.pendingAmount > 0 ? 'text-amber-900' : 'text-emerald-900'
-                }`}>
-                  Pending Amount
-                </h3>
-                <p className={`text-sm ${
-                  stats.pendingAmount > 0 ? 'text-amber-700' : 'text-emerald-700'
-                }`}>
-                  {data.bills?.filter(b => b.paymentStatus !== 'paid').length || 0} unpaid bills
-                </p>
+              <div className={`text-4xl font-semibold ${
+                stats.pendingAmount > 0 ? 'text-amber-600' : 'text-emerald-600'
+              }`}>
+                {stats.pendingAmount > 0 ? formatCurrency(stats.pendingAmount) : '₹0'}
               </div>
             </div>
-            <div className="text-right">
-              <div className={`text-3xl font-bold ${
-                stats.pendingAmount > 0 ? 'text-amber-900' : 'text-emerald-900'
-              }`}>
-                {formatCurrency(stats.pendingAmount)}
-              </div>
-              <div className={`text-sm ${
-                stats.pendingAmount > 0 ? 'text-amber-700' : 'text-emerald-700'
-              }`}>
-                {stats.pendingAmount > 0 ? 'Requires attention' : 'All paid up!'}
-              </div>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+              stats.pendingAmount > 0 ? 'bg-amber-100' : 'bg-emerald-100'
+            }`}>
+              {stats.pendingAmount > 0 ? (
+                <Clock className="h-6 w-6 text-amber-600" />
+              ) : (
+                <CheckCircle className="h-6 w-6 text-emerald-600" />
+              )}
             </div>
           </div>
           
-          {stats.pendingAmount > 0 && (
-            <div className="flex items-center gap-2 bg-amber-100 px-3 py-2 rounded-lg">
-              <Activity className="h-4 w-4 text-amber-600" />
-              <span className="text-sm text-amber-800">Outstanding payment required</span>
-            </div>
-          )}
+          <div className={`text-sm ${stats.pendingAmount > 0 ? 'text-amber-700' : 'text-emerald-700'}`}>
+            {stats.pendingAmount > 0 
+              ? `${data.bills?.filter(b => b.paymentStatus !== 'paid').length || 0} unpaid bills require attention`
+              : 'All payments completed'}
+          </div>
         </div>
       </div>
 
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Calendar className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalBookings}</div>
-              <div className="text-xs text-gray-500">Total Bookings</div>
-            </div>
-          </div>
-          <div className="text-sm text-gray-600">{stats.completionRate}% completion rate</div>
+      {/* Business Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <div className="text-sm font-medium text-gray-500 mb-2">Total Bookings</div>
+          <div className="text-3xl font-semibold text-gray-900 mb-3">{stats.totalBookings}</div>
+          <div className="text-xs text-gray-600">{stats.completionRate}% completion rate</div>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Activity className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">
-                {stats.averageDaysBetweenVisits > 0 ? `${stats.averageDaysBetweenVisits}` : '—'}
-              </div>
-              <div className="text-xs text-gray-500">Visit Frequency</div>
-            </div>
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <div className="text-sm font-medium text-gray-500 mb-2">Visit Frequency</div>
+          <div className="text-3xl font-semibold text-gray-900 mb-3">
+            {stats.averageDaysBetweenVisits > 0 ? `${stats.averageDaysBetweenVisits}d` : '—'}
           </div>
-          <div className="text-sm text-gray-600">Average days between visits</div>
+          <div className="text-xs text-gray-600">Average between visits</div>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-              <Target className="h-5 w-5 text-purple-600" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">{stats.paymentRate}%</div>
-              <div className="text-xs text-gray-500">Payment Rate</div>
-            </div>
-          </div>
-          <div className="w-full h-2 bg-gray-200 rounded-full">
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <div className="text-sm font-medium text-gray-500 mb-2">Payment Rate</div>
+          <div className="text-3xl font-semibold text-gray-900 mb-3">{stats.paymentRate}%</div>
+          <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div 
-              className="h-2 bg-purple-500 rounded-full transition-all duration-300"
+              className="h-full bg-gray-900 rounded-full transition-all duration-300"
               style={{ width: `${stats.paymentRate}%` }}
             />
           </div>
         </div>
 
-        <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <Wrench className="h-5 w-5 text-indigo-600" />
-            </div>
-            <div>
-              <div className="text-lg font-bold text-gray-900 truncate">{stats.mostFrequentService}</div>
-              <div className="text-xs text-gray-500">Most Frequent Service</div>
-            </div>
-          </div>
-          <div className="text-sm text-gray-600">Primary service type</div>
+        <div className="bg-white border border-gray-200 rounded-lg p-5">
+          <div className="text-sm font-medium text-gray-500 mb-2">Top Service</div>
+          <div className="text-lg font-semibold text-gray-900 mb-3 truncate">{stats.mostFrequentService}</div>
+          <div className="text-xs text-gray-600">Most requested</div>
         </div>
       </div>
 

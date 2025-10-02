@@ -13,7 +13,8 @@ import {
   Phone,
   Mail,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  User
 } from 'lucide-react';
 
 const ReminderDialog = ({ isOpen, customerData, onClose, onSetReminder }) => {
@@ -89,23 +90,23 @@ const ReminderDialog = ({ isOpen, customerData, onClose, onSetReminder }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         <Card className="border-0 shadow-none">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+          <CardHeader className="border-b border-gray-200 bg-white">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Bell className="w-5 h-5 text-blue-600" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Set Reminder</CardTitle>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Schedule a reminder for {customerData?.customerName || 'this customer'}
-                  </p>
-                </div>
+              <div>
+                <CardTitle className="text-xl font-semibold text-gray-900">Set Reminder</CardTitle>
+                <p className="text-sm text-gray-500 mt-1">
+                  Schedule a reminder for {customerData?.customerName || 'this customer'}
+                </p>
               </div>
-              <Button variant="outline" size="sm" onClick={onClose} className="h-8 w-8 p-0">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClose} 
+                className="h-9 w-9 p-0 text-gray-400 hover:text-gray-900 hover:bg-gray-50"
+              >
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -114,24 +115,24 @@ const ReminderDialog = ({ isOpen, customerData, onClose, onSetReminder }) => {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Customer Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="font-medium text-gray-900 mb-2">Customer Details</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div className="bg-gray-50 rounded-lg p-5 border border-gray-200">
+                <h3 className="font-semibold text-gray-900 mb-3 text-sm">Customer Details</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Name:</span>
-                    <span className="ml-2 font-medium">{customerData?.customerName || '—'}</span>
+                    <div className="text-xs text-gray-500 mb-1">Name</div>
+                    <div className="font-medium text-gray-900">{customerData?.customerName || '—'}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">Vehicle:</span>
-                    <span className="ml-2 font-medium">{customerData?.vehicleRegistration || '—'}</span>
+                    <div className="text-xs text-gray-500 mb-1">Vehicle</div>
+                    <div className="font-medium text-gray-900">{customerData?.vehicleRegistration || '—'}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">Phone:</span>
-                    <span className="ml-2 font-medium">{customerData?.contactNumber || '—'}</span>
+                    <div className="text-xs text-gray-500 mb-1">Phone</div>
+                    <div className="font-medium text-gray-900">{customerData?.contactNumber || '—'}</div>
                   </div>
                   <div>
-                    <span className="text-gray-600">Email:</span>
-                    <span className="ml-2 font-medium">{customerData?.email || 'Not provided'}</span>
+                    <div className="text-xs text-gray-500 mb-1">Email</div>
+                    <div className="font-medium text-gray-900 truncate">{customerData?.email || 'Not provided'}</div>
                   </div>
                 </div>
               </div>
@@ -239,20 +240,25 @@ const ReminderDialog = ({ isOpen, customerData, onClose, onSetReminder }) => {
 
               {/* Actions */}
               <div className="flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={onClose}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onClose}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading} className="flex items-center gap-2">
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-50"
+                >
                   {loading ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                       Setting...
                     </>
                   ) : (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      Set Reminder
-                    </>
+                    'Set Reminder'
                   )}
                 </Button>
               </div>

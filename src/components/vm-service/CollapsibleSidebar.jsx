@@ -10,7 +10,7 @@ import {
 } from '../ui/sidebar';
 import { Button } from '../ui/button';
 import { ChevronDown, ChevronRight } from 'lucide-react';
-import { menuItems } from '../../config/menuConfig';
+import { menuItems, bottomMenuItems } from '../../config/menuConfig';
 import { useAuth } from '../../hooks/useAuth';
 
 const CollapsibleSidebar = ({
@@ -43,10 +43,12 @@ const CollapsibleSidebar = ({
   // Group menu items by task-based categories
   const operationsItems = getFilteredMenuItems().filter(item => ['overview', 'bookings', 'customers', 'inventory'].includes(item.id));
   const adminItems = getFilteredMenuItems().filter(item => ['users'].includes(item.id));
+  const systemItems = bottomMenuItems.filter(item => ['notifications', 'settings'].includes(item.id));
 
   const menuGroups = [
     { title: 'Operations', items: operationsItems },
-    { title: 'Administration', items: adminItems }
+    { title: 'Administration', items: adminItems },
+    { title: 'System', items: systemItems }
   ].filter(group => group.items.length > 0);
 
   // Collapsible state per group

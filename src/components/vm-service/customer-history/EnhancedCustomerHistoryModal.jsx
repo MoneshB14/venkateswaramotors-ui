@@ -199,8 +199,8 @@ const EnhancedCustomerHistoryModal = ({
   })() : null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg sm:rounded-2xl shadow-2xl max-w-7xl w-full max-h-[98vh] sm:max-h-[95vh] overflow-hidden border border-gray-200 flex flex-col">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden border border-gray-200 flex flex-col">
         {/* Header */}
         <CustomerHistoryHeader
           data={data}
@@ -271,47 +271,47 @@ const EnhancedCustomerHistoryModal = ({
           {/* Main Content */}
           {!isLoading && !error && data && (
             <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Modern Tab Navigation */}
-              <div className="bg-white border-b border-gray-200 px-2 sm:px-4 py-3 flex-shrink-0">
-                <div className="flex items-center gap-2 sm:gap-4 lg:gap-6 overflow-x-auto">
+              {/* Professional Tab Navigation */}
+              <div className="border-b border-gray-200 px-6 bg-white">
+                <div className="flex items-center gap-6 overflow-x-auto">
                   <button
                     onClick={() => setActiveTab('overview')}
-                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${activeTab === 'overview'
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    aria-label="View overview tab"
+                    className={`flex items-center gap-2 px-1 py-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'overview'
+                        ? 'border-gray-900 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
                   >
-                    <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="font-semibold text-sm sm:text-base">Overview</span>
+                    <BarChart3 className="h-4 w-4" />
+                    Overview
                   </button>
 
                   <button
                     onClick={() => setActiveTab('bookings')}
-                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${activeTab === 'bookings'
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    aria-label="View bookings tab"
+                    className={`flex items-center gap-2 px-1 py-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'bookings'
+                        ? 'border-gray-900 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
                   >
-                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="font-semibold text-sm sm:text-base">Bookings</span>
-                    <span className="ml-1 text-xs bg-blue-100 text-blue-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
+                    <Calendar className="h-4 w-4" />
+                    Bookings
+                    <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
                       {data.bookings?.length || 0}
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab('bills')}
-                    className={`flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2.5 rounded-lg font-medium transition-all duration-200 whitespace-nowrap ${activeTab === 'bills'
-                      ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      }`}
-                    aria-label="View bills tab"
+                    className={`flex items-center gap-2 px-1 py-4 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${
+                      activeTab === 'bills'
+                        ? 'border-gray-900 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                    }`}
                   >
-                    <Receipt className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="font-semibold text-sm sm:text-base">Bills</span>
-                    <span className="ml-1 text-xs bg-emerald-100 text-emerald-700 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full font-medium">
+                    <Receipt className="h-4 w-4" />
+                    Bills
+                    <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
                       {data.bills?.length || 0}
                     </span>
                   </button>
